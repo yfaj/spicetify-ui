@@ -1,8 +1,33 @@
 #include "flutter_window.h"
 
+#include <dwmapi.h>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+
+namespace {
+
+// DWMWA_BORDER_COLOR is Windows 11 only and not in every SDK's headers.
+constexpr DWORD kDwmwaBorderColor = 34;
+// Sentinel meaning "draw no border".
+constexpr COLORREF kDwmwaColorNone = 0xFFFFFFFE;
+
+// Windows 11 draws a one-pixel border around every top-level window, in the
+// compositor rather than in the client area. On a frameless, transparent
+// window it shows up as an outline around content that is meant to float, and
+// nothing in the Flutter layer can remove it.
+void RemoveDwmBorder(HWND hwnd) {
+  const COLORREF none = kDwmwaColorNone;
+  DwmSetWindowAttribute(hwnd, kDwmwaBorderColor, &none, sizeof(none));
+
+  // Also ask for the dark caption treatment, so any residual system chrome
+  // does not flash light on launch.
+  const BOOL dark = TRUE;
+  DwmSetWindowAttribute(hwnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark,
+                        sizeof(dark));
+}
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -26,6 +51,8 @@ bool FlutterWindow::OnCreate() {
   }
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
+
+  RemoveDwmBorder(GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
