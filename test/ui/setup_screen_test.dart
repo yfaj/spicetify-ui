@@ -113,7 +113,27 @@ void main() {
     expect(find.text('winget install Spicetify.Spicetify'), findsNothing);
   });
 
-  testWidgets('shows version, path, and actions when the CLI is found', (
+  testWidgets('shows the actions when the CLI is found', (tester) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(find.text('Backup'), findsOneWidget);
+    expect(find.text('Clear backup'), findsOneWidget);
+    expect(find.text('Enable devtools'), findsOneWidget);
+    expect(find.text('Restart'), findsOneWidget);
+    expect(find.text('Block updates'), findsOneWidget);
+    expect(find.text('Unblock updates'), findsOneWidget);
+  });
+
+  testWidgets('does not repeat the CLI version the titlebar already shows', (
     tester,
   ) async {
     final controller = buildController(found: true);
@@ -127,13 +147,7 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('2.45.0'), findsOneWidget);
-    expect(find.text('Backup'), findsOneWidget);
-    expect(find.text('Clear backup'), findsOneWidget);
-    expect(find.text('Enable devtools'), findsOneWidget);
-    expect(find.text('Restart'), findsOneWidget);
-    expect(find.text('Block updates'), findsOneWidget);
-    expect(find.text('Unblock updates'), findsOneWidget);
+    expect(find.textContaining('Spicetify 2.45.0'), findsNothing);
   });
 
   testWidgets('offers a bare run when the config file is missing', (

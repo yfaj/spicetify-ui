@@ -96,11 +96,29 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   (k) => k.group == 'Advanced',
                 ))
                   _buildField(field),
+              if (_advancedOpen) _buildCliPath(theme),
               const SizedBox(height: 16),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCliPath(ThemeData theme) {
+    final path = widget.controller.cliPath ?? 'not found';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        Text('Spicetify CLI', style: theme.textTheme.bodySmall),
+        Text(
+          path,
+          style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 

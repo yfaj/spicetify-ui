@@ -59,24 +59,7 @@ class _Found extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              size: 16,
-              color: Color(0xFF4ADE80),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Spicetify ${controller.cliVersion ?? ''}',
-              style: theme.textTheme.titleMedium,
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(controller.cliPath ?? '', style: theme.textTheme.bodySmall),
         if (controller.config == null) ...[
-          const SizedBox(height: 12),
           Text(
             'Config file not found. Run Spicetify once to generate defaults.',
             style: theme.textTheme.bodySmall,
@@ -86,8 +69,8 @@ class _Found extends StatelessWidget {
             onPressed: canRun ? controller.runBare : null,
             child: const Text('Run Spicetify'),
           ),
+          const SizedBox(height: 20),
         ],
-        const SizedBox(height: 20),
         Wrap(
           spacing: 8,
           children: [
