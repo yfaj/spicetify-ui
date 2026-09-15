@@ -1,5 +1,28 @@
 import 'package:flutter/material.dart';
 
+/// `InkWell` paints its hover and splash on the nearest `Material` ancestor.
+/// Without a local one that is the Scaffold body, and the highlight is drawn
+/// against the wrong box. Every row carries its own transparent Material so
+/// the ink is clipped to the row it belongs to.
+class _RowInk extends StatelessWidget {
+  const _RowInk({required this.onTap, required this.child});
+
+  final VoidCallback? onTap;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: child,
+      ),
+    );
+  }
+}
+
 class ActionRow extends StatelessWidget {
   const ActionRow({
     super.key,
@@ -17,9 +40,8 @@ class ActionRow extends StatelessWidget {
     final theme = Theme.of(context);
     final enabled = onTap != null;
 
-    return InkWell(
+    return _RowInk(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
@@ -74,9 +96,8 @@ class ActionToggle extends StatelessWidget {
     final theme = Theme.of(context);
     final enabled = onChanged != null;
 
-    return InkWell(
+    return _RowInk(
       onTap: enabled ? () => onChanged!(!value) : null,
-      borderRadius: BorderRadius.circular(6),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: Row(

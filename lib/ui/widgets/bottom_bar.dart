@@ -52,6 +52,7 @@ class _BottomBarState extends State<BottomBar> {
             Container(
               height: 52,
               padding: const EdgeInsets.symmetric(horizontal: 12),
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Row(
                 children: [
                   IconButton(
