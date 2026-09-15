@@ -56,97 +56,98 @@ class _LogPanelState extends State<LogPanel> {
       child: SizedBox(
         width: widget.width,
         child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF141414),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: divider),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0xAA000000),
-              blurRadius: 24,
-              spreadRadius: 2,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(9),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: 38,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 12),
-                    Icon(Icons.subject, size: 14, color: theme.hintColor),
-                    const SizedBox(width: 8),
-                    Text('Log', style: theme.textTheme.bodyMedium),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${widget.lines.length}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (widget.lines.isNotEmpty)
-                      _PanelButton(
-                        icon: Icons.copy_all_outlined,
-                        tooltip: 'Copy all',
-                        onTap: () => Clipboard.setData(
-                          ClipboardData(
-                            text: widget.lines
-                                .map((line) => line.text)
-                                .join('\n'),
-                          ),
-                        ),
-                      ),
-                    if (widget.lines.isNotEmpty)
-                      _PanelButton(
-                        icon: Icons.delete_outline,
-                        tooltip: 'Clear log',
-                        onTap: widget.onClear,
-                      ),
-                    _PanelButton(
-                      icon: Icons.close,
-                      tooltip: 'Hide log',
-                      onTap: widget.onClose,
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: divider),
-              Expanded(
-                child: widget.lines.isEmpty
-                    ? Center(
-                        child: Text(
-                          'no output yet',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      )
-                    : SelectionArea(
-                        child: ListView.builder(
-                          controller: _scroll,
-                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                          itemCount: widget.lines.length,
-                          itemBuilder: (context, index) {
-                            final line = widget.lines[index];
-                            return Text(
-                              line.text,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontFamily: 'monospace',
-                                fontSize: 10.5,
-                                color: line.stream == LogStream.stderr
-                                    ? const Color(0xFFEF4444)
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+          decoration: BoxDecoration(
+            color: const Color(0xFF141414),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: divider),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xAA000000),
+                blurRadius: 24,
+                spreadRadius: 2,
+                offset: Offset(0, 8),
               ),
             ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: 38,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 12),
+                      Icon(Icons.subject, size: 14, color: theme.hintColor),
+                      const SizedBox(width: 8),
+                      Text('Log', style: theme.textTheme.bodyMedium),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${widget.lines.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.hintColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (widget.lines.isNotEmpty)
+                        _PanelButton(
+                          icon: Icons.copy_all_outlined,
+                          tooltip: 'Copy all',
+                          onTap: () => Clipboard.setData(
+                            ClipboardData(
+                              text: widget.lines
+                                  .map((line) => line.text)
+                                  .join('\n'),
+                            ),
+                          ),
+                        ),
+                      if (widget.lines.isNotEmpty)
+                        _PanelButton(
+                          icon: Icons.delete_outline,
+                          tooltip: 'Clear log',
+                          onTap: widget.onClear,
+                        ),
+                      _PanelButton(
+                        icon: Icons.close,
+                        tooltip: 'Hide log',
+                        onTap: widget.onClose,
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: divider),
+                Expanded(
+                  child: widget.lines.isEmpty
+                      ? Center(
+                          child: Text(
+                            'no output yet',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        )
+                      : SelectionArea(
+                          child: ListView.builder(
+                            controller: _scroll,
+                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                            itemCount: widget.lines.length,
+                            itemBuilder: (context, index) {
+                              final line = widget.lines[index];
+                              return Text(
+                                line.text,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10.5,
+                                  color: line.stream == LogStream.stderr
+                                      ? const Color(0xFFEF4444)
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
