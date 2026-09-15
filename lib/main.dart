@@ -253,54 +253,76 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
         builder: (context, _) {
           final controller = widget.controller;
 
+          final theme = Theme.of(context);
+          final cardBorder = theme.dividerColor.withValues(alpha: 0.5);
+
           return Scaffold(
-            body: Column(
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (usesCustomShell)
-                  Titlebar(
-                    appVersion: appVersion,
-                    cliVersion: controller.cliVersion,
-                    state: _dotState(controller),
+                if (_logOpen)
+                  LogPanel(
+                    lines: controller.log,
+                    onClose: () => _setLogOpen(false),
+                    onClear: controller.clearLog,
                   ),
+                // The main window is its own card, so the pair reads as two
+                // windows side by side rather than one window containing
+                // another.
                 Expanded(
-                  child: Stack(
-                    children: [
-                      Column(
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: cardBorder),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0xAA000000),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(9),
+                      child: Column(
                         children: [
-                          const SizedBox(height: 8),
-                          TabStrip(
-                            index: _tab,
-                            onChanged: (i) => setState(() => _tab = i),
-                          ),
-                          const SizedBox(height: 8),
+                          if (usesCustomShell)
+                            Titlebar(
+                              appVersion: appVersion,
+                              cliVersion: controller.cliVersion,
+                              state: _dotState(controller),
+                            ),
                           Expanded(
-                            child: switch (_tab) {
-                              0 => SetupScreen(controller: controller),
-                              1 => ConfigScreen(controller: controller),
-                              _ => BackupScreen(controller: controller),
-                            },
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                TabStrip(
+                                  index: _tab,
+                                  onChanged: (i) => setState(() => _tab = i),
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: switch (_tab) {
+                                    0 => SetupScreen(controller: controller),
+                                    1 => ConfigScreen(controller: controller),
+                                    _ => BackupScreen(controller: controller),
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          BottomBar(
+                            controller: controller,
+                            logOpen: _logOpen,
+                            onToggleLog: () => _setLogOpen(!_logOpen),
                           ),
                         ],
                       ),
-                      // Floats over the content rather than taking width from
-                      // it. The window never changes size.
-                      if (_logOpen)
-                        Positioned(
-                          left: 16,
-                          top: 60,
-                          child: LogPanel(
-                            lines: controller.log,
-                            onClose: () => _setLogOpen(false),
-                            onClear: controller.clearLog,
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
-                ),
-                BottomBar(
-                  controller: controller,
-                  logOpen: _logOpen,
-                  onToggleLog: () => _setLogOpen(!_logOpen),
                 ),
               ],
             ),

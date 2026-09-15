@@ -10,15 +10,13 @@ class LogPanel extends StatefulWidget {
     required this.lines,
     required this.onClose,
     required this.onClear,
-    this.width = 330,
-    this.height = 300,
+    this.width = 220,
   });
 
   final List<LogLine> lines;
   final VoidCallback onClose;
   final VoidCallback onClear;
   final double width;
-  final double height;
 
   @override
   State<LogPanel> createState() => _LogPanelState();
@@ -53,10 +51,11 @@ class _LogPanelState extends State<LogPanel> {
     final theme = Theme.of(context);
     final divider = theme.dividerColor.withValues(alpha: 0.5);
 
-    return SizedBox(
-      width: widget.width,
-      height: widget.height,
-      child: Container(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+      child: SizedBox(
+        width: widget.width,
+        child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF141414),
           borderRadius: BorderRadius.circular(10),
