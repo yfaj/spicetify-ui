@@ -259,7 +259,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final theme = Theme.of(context);
 
           return Scaffold(
-            backgroundColor: Colors.transparent,
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

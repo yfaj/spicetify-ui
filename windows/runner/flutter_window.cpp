@@ -10,27 +10,10 @@ namespace {
 // DWMWA_BORDER_COLOR is Windows 11 only and not in every SDK's headers.
 constexpr DWORD kDwmwaBorderColor = 34;
 // Asking for no border (0xFFFFFFFE) is not honoured on every build; some fall
-// back to the default light one, which reads as a white frame around a
-// transparent window. Painting it the card colour instead is honoured, and a
-// dark edge on a dark card is invisible.
+// back to the default light one, which reads as a white frame. Painting it the
+// card colour instead is honoured, and a dark edge on a dark card is
+// invisible.
 constexpr COLORREF kDwmwaColorNone = 0x00141414;
-
-enum AccentState {
-  ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
-};
-
-struct AccentPolicy {
-  int accent_state;
-  int flags;
-  int gradient_color;
-  int animation_id;
-};
-
-struct WindowCompositionAttributeData {
-  int attribute;
-  void* data;
-  unsigned long data_size;
-};
 
 // Windows 11 draws a one-pixel border around every top-level window, in the
 // compositor rather than in the client area, which shows as an outline around
@@ -44,42 +27,6 @@ void RemoveDwmBorder(HWND hwnd) {
   const BOOL dark = TRUE;
   DwmSetWindowAttribute(hwnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark,
                         sizeof(dark));
-}
-
-// Leaves the window unfilled so the desktop shows between the cards.
-//
-// window_manager can do this too, but it passes flags = 2, which asks the
-// compositor to draw a one-pixel border around the window. That border is the
-// frame that survives every attempt to style it away, so the accent is set
-// here with flags = 0 instead. This runs before the window is shown; applying
-// it afterwards lets the compositor draw its own chrome over the top.
-void MakeWindowTransparent(HWND hwnd) {
-  const HINSTANCE user32 = LoadLibraryW(L"user32.dll");
-  if (user32 == nullptr) {
-    return;
-  }
-
-  using SetWindowCompositionAttributeFn =
-      BOOL(WINAPI*)(HWND, WindowCompositionAttributeData*);
-  const auto set_composition =
-      reinterpret_cast<SetWindowCompositionAttributeFn>(
-          GetProcAddress(user32, "SetWindowCompositionAttribute"));
-
-  if (set_composition != nullptr) {
-    AccentPolicy policy = {};
-    policy.accent_state = ACCENT_ENABLE_TRANSPARENTGRADIENT;
-    policy.flags = 0;
-    policy.gradient_color = 0;
-
-    WindowCompositionAttributeData data = {};
-    data.attribute = 19;  // WCA_ACCENT_POLICY
-    data.data = &policy;
-    data.data_size = sizeof(policy);
-
-    set_composition(hwnd, &data);
-  }
-
-  FreeLibrary(user32);
 }
 
 }  // namespace
@@ -107,16 +54,10 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  // Both before the window is shown. Applying the accent afterwards lets the
-  // compositor draw its own chrome over the top of it.
   RemoveDwmBorder(GetHandle());
-  MakeWindowTransparent(GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
-    // The compositor can re-apply its own border once the window is visible.
-    // Only the border is re-asserted here; re-running the accent at this point
-    // is what produced a grey wash.
     RemoveDwmBorder(GetHandle());
   });
 
