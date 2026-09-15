@@ -31,7 +31,7 @@ class ScriptedRunner implements CommandRunner {
   }
 }
 
-Future<AppController> buildController() async {
+Future<AppController> buildController({bool withConfig = true}) async {
   final runner = ScriptedRunner(const {
     '--version': '2.45.0',
     '-c': r'C:\cfg\config-xpui.ini',
@@ -47,7 +47,7 @@ Future<AppController> buildController() async {
       executableName: 'spicetify.exe',
     ),
     runnerFactory: (_) => runner,
-    configFileReader: (_) => '[Setting]\ninject_css = 1\n',
+    configFileReader: (_) => withConfig ? '[Setting]\ninject_css = 1\n' : '',
     directoryLister: (path) =>
         path.endsWith('Themes') ? const ['Sleek'] : const [],
     spotifyVersionDetector: () async => null,
@@ -138,5 +138,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('dropdown_current_theme')), findsOneWidget);
+  });
+  testWidgets('shows no controls at all when the config is unavailable', (
+    tester,
+  ) async {
+    final controller = await buildController(withConfig: false);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: ConfigScreen(controller: controller)),
+      ),
+    );
+
+    expect(controller.config, isNull);
+    expect(
+      find.textContaining('Configuration is not available'),
+      findsOneWidget,
+    );
+    expect(find.byType(Switch), findsNothing);
+    expect(find.byType(DropdownButton<String>), findsNothing);
   });
 }

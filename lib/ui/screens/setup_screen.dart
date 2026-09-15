@@ -122,17 +122,18 @@ class _Found extends StatelessWidget {
               subtitle: 'Enable it now · Ctrl+Shift+I inside Spotify',
               onTap: canRun ? controller.enableDevtools : null,
             ),
-            ActionToggle(
-              title: 'Always enable devtools',
-              subtitle: 'Keep DevTools available on every launch',
-              value: _alwaysDevtools,
-              onChanged: canRun
-                  ? (value) => controller.stage(
-                      'always_enable_devtools',
-                      value ? '1' : '0',
-                    )
-                  : null,
-            ),
+            if (controller.config != null)
+              ActionToggle(
+                title: 'Always enable devtools',
+                subtitle: 'Keep DevTools available on every launch',
+                value: _alwaysDevtools,
+                onChanged: canRun
+                    ? (value) => controller.stage(
+                        'always_enable_devtools',
+                        value ? '1' : '0',
+                      )
+                    : null,
+              ),
             ActionRow(
               title: 'Restart',
               subtitle: 'Restart the Spotify client',

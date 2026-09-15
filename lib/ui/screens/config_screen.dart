@@ -50,6 +50,23 @@ class _ConfigScreenState extends State<ConfigScreen> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, _) {
+        // Every control below reads its value from the config. With no config
+        // loaded, rendering them would show a page of toggles all reading
+        // "off" — a value we do not actually know.
+        if (widget.controller.config == null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Configuration is not available.\n'
+                'Spicetify has not reported a readable config file.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          );
+        }
+
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: Column(

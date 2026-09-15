@@ -44,6 +44,7 @@ class ScriptedRunner implements CommandRunner {
 ({AppController controller, ScriptedRunner runner}) buildFixture({
   required bool found,
   bool blockSucceeds = true,
+  bool withConfig = false,
 }) {
   final runner = ScriptedRunner(const {
     '--version': 'spicetify v2.45.0',
@@ -61,7 +62,8 @@ class ScriptedRunner implements CommandRunner {
       executableName: 'spicetify.exe',
     ),
     runnerFactory: (_) => runner,
-    configFileReader: (_) => '',
+    configFileReader: (_) =>
+        withConfig ? '[Setting]\nalways_enable_devtools = 1\n' : '',
     directoryLister: (_) => const [],
     spotifyVersionDetector: () async => null,
     scheduler: const UnsupportedTaskScheduler(),
@@ -75,7 +77,12 @@ class ScriptedRunner implements CommandRunner {
 AppController buildController({
   required bool found,
   bool blockSucceeds = true,
-}) => buildFixture(found: found, blockSucceeds: blockSucceeds).controller;
+  bool withConfig = false,
+}) => buildFixture(
+  found: found,
+  blockSucceeds: blockSucceeds,
+  withConfig: withConfig,
+).controller;
 
 void main() {
   test('installLinesFor returns Windows lines on Windows', () {
@@ -295,5 +302,39 @@ void main() {
       contains(equals(['spotify-updates', 'block'])),
     );
     expect(fixture.controller.updatesBlocked, isTrue);
+  });
+  testWidgets('hides the devtools toggle when the config is unavailable', (
+    tester,
+  ) async {
+    final controller = buildController(found: true, withConfig: false);
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(controller.config, isNull);
+    expect(find.text('Always enable devtools'), findsNothing);
+  });
+
+  testWidgets('shows the devtools toggle once the config is readable', (
+    tester,
+  ) async {
+    final controller = buildController(found: true, withConfig: true);
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(find.text('Always enable devtools'), findsOneWidget);
   });
 }
