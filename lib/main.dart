@@ -154,7 +154,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
     widget.controller.refreshAutoReapply();
-    widget.controller.refreshBackup();
   }
 
   @override

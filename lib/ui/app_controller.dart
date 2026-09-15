@@ -161,6 +161,10 @@ class AppController extends ChangeNotifier {
       busy = false;
       notifyListeners();
     }
+
+    // After the config and versions are in place. Reading the backup first
+    // would see no config and report an empty backup that is not empty.
+    await refreshBackup();
   }
 
   String? _currentValue(String key) {
