@@ -72,20 +72,6 @@ class _Found extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-        Wrap(
-          spacing: 8,
-          children: [
-            FilledButton.tonal(
-              onPressed: canRun ? controller.refresh : null,
-              child: const Text('Check for updates'),
-            ),
-            FilledButton.tonal(
-              onPressed: canRun ? controller.upgrade : null,
-              child: const Text('Upgrade'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
         ActionGroup(
           label: 'UPDATES',
           children: [
