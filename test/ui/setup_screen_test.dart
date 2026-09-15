@@ -127,10 +127,26 @@ void main() {
 
     expect(find.text('Backup'), findsOneWidget);
     expect(find.text('Clear backup'), findsOneWidget);
-    expect(find.text('Enable devtools'), findsOneWidget);
     expect(find.text('Restart'), findsOneWidget);
     expect(find.text('Block updates'), findsOneWidget);
     expect(find.text('Unblock updates'), findsOneWidget);
+  });
+
+  testWidgets('does not duplicate the devtools toggle that lives in config', (
+    tester,
+  ) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(find.text('Enable devtools'), findsNothing);
   });
 
   testWidgets('does not repeat the CLI version the titlebar already shows', (
