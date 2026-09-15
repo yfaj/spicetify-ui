@@ -54,10 +54,7 @@ class BackupScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ActionGroup(
-                label: 'BACKUP',
-                children: [_StatusCard(status: status)],
-              ),
+              _StatusCard(status: status),
               ActionGroup(
                 label: 'ACTIONS',
                 children: [
@@ -146,11 +143,12 @@ class _StatusCard extends StatelessWidget {
     };
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: colour),
               const SizedBox(width: 8),
@@ -158,7 +156,11 @@ class _StatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(_detail(), style: theme.textTheme.bodySmall),
+          Text(
+            _detail(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall,
+          ),
           if (status.state == BackupState.wrongTool)
             Text(
               'Applying is refused until a fresh backup is made.',
@@ -174,7 +176,7 @@ class _StatusCard extends StatelessWidget {
               ),
             ),
           if (status.files.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 18),
             for (final file in status.files)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
