@@ -18,6 +18,7 @@ Future<void> configureWindow() async {
 
   await windowManager.waitUntilReadyToShow(options, () async {
     await windowManager.setResizable(false);
+    await windowManager.setMaximizable(false);
     await windowManager.setMinimumSize(windowSize);
     await windowManager.setMaximumSize(windowSize);
     if (usesCustomShell) {

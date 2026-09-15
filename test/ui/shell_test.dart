@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spicetify_ui/ui/shell/tabs.dart';
@@ -57,5 +59,27 @@ void main() {
     await tester.pump();
 
     expect(selected, 1);
+  });
+
+  test('configureWindow disables maximizing alongside resizing', () {
+    final source = File('lib/ui/shell/app_window.dart').readAsStringSync();
+
+    final resizable = source.indexOf('setResizable(false)');
+    final maximizable = source.indexOf('setMaximizable(false)');
+    final maximumSize = source.indexOf('setMaximumSize(windowSize)');
+
+    expect(resizable, isNot(-1));
+    expect(maximizable, isNot(-1));
+    expect(maximumSize, isNot(-1));
+    expect(
+      maximizable,
+      greaterThan(resizable),
+      reason: 'setMaximizable must run inside waitUntilReadyToShow, after setResizable',
+    );
+    expect(
+      maximizable,
+      lessThan(maximumSize),
+      reason: 'setMaximizable must run inside waitUntilReadyToShow, before setMaximumSize',
+    );
   });
 }
