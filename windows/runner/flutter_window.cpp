@@ -9,8 +9,11 @@ namespace {
 
 // DWMWA_BORDER_COLOR is Windows 11 only and not in every SDK's headers.
 constexpr DWORD kDwmwaBorderColor = 34;
-// Sentinel meaning "draw no border".
-constexpr COLORREF kDwmwaColorNone = 0xFFFFFFFE;
+// Asking for no border (0xFFFFFFFE) is not honoured on every build; some fall
+// back to the default light one, which reads as a white frame around a
+// transparent window. Painting it the card colour instead is honoured, and a
+// dark edge on a dark card is invisible.
+constexpr COLORREF kDwmwaColorNone = 0x00141414;
 
 enum AccentState {
   ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
@@ -104,13 +107,17 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  // Both before the window is shown. Applying them afterwards lets the
-  // compositor draw its own chrome over the top of them.
+  // Both before the window is shown. Applying the accent afterwards lets the
+  // compositor draw its own chrome over the top of it.
   RemoveDwmBorder(GetHandle());
   MakeWindowTransparent(GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
+    // The compositor can re-apply its own border once the window is visible.
+    // Only the border is re-asserted here; re-running the accent at this point
+    // is what produced a grey wash.
+    RemoveDwmBorder(GetHandle());
   });
 
   // Flutter can complete the first frame before the "show window" callback is
