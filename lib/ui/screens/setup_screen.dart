@@ -30,9 +30,14 @@ class SetupScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
+        final status = controller.cliStatus;
+        if (status == CliStatus.unknown) {
+          return const Center(child: Text('Checking for Spicetify...'));
+        }
+
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: controller.cliStatus == CliStatus.found
+          child: status == CliStatus.found
               ? _Found(controller: controller)
               : _Missing(controller: controller, isWindows: windows),
         );
@@ -86,15 +91,17 @@ class _Found extends StatelessWidget {
             OutlinedButton(onPressed: canRun ? controller.clearBackup : null, child: const Text('Clear backup')),
             OutlinedButton(onPressed: canRun ? controller.enableDevtools : null, child: const Text('Enable devtools')),
             OutlinedButton(onPressed: canRun ? controller.restart : null, child: const Text('Restart')),
+            OutlinedButton(
+              onPressed: canRun ? () => controller.setBlockUpdates(true) : null,
+              child: const Text('Block updates'),
+            ),
+            OutlinedButton(
+              onPressed: canRun ? () => controller.setBlockUpdates(false) : null,
+              child: const Text('Unblock updates'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Block Spotify updates'),
-          value: false,
-          onChanged: canRun ? (value) => controller.setBlockUpdates(value) : null,
-        ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('Watch for changes'),
