@@ -54,11 +54,12 @@ class BackupScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ActionGroup(
-                label: 'BACKUP',
-                centerLabel: true,
-                children: [_StatusCard(status: status)],
-              ),
+              _StatusCard(status: status),
+              if (status.files.isNotEmpty)
+                ActionGroup(
+                  label: 'BACKUP',
+                  children: [_FileList(files: status.files)],
+                ),
               ActionGroup(
                 label: 'ACTIONS',
                 children: [
@@ -114,6 +115,8 @@ class BackupScreen extends StatelessWidget {
   }
 }
 
+/// The state of the backup. Stands on its own: the `BACKUP` label below names
+/// the files, not this.
 class _StatusCard extends StatelessWidget {
   const _StatusCard({required this.status});
 
@@ -168,6 +171,7 @@ class _StatusCard extends StatelessWidget {
           if (status.state == BackupState.wrongTool)
             Text(
               'Applying is refused until a fresh backup is made.',
+              textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.hintColor,
               ),
@@ -175,43 +179,11 @@ class _StatusCard extends StatelessWidget {
           if (status.state == BackupState.stale)
             Text(
               'Spotify updated, so this backup no longer matches it.',
+              textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.hintColor,
               ),
             ),
-          if (status.files.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            for (final file in status.files)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        file.name,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    Text(
-                      formatBytes(file.size),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      _formatDate(file.modified),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.hintColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
         ],
       ),
     );
@@ -225,6 +197,56 @@ class _StatusCard extends StatelessWidget {
     final spotify = status.spotifyLabel;
     final with_ = status.backupWith ?? 'unknown';
     return 'Spotify $spotify · made with Spicetify $with_';
+  }
+}
+
+class _FileList extends StatelessWidget {
+  const _FileList({required this.files});
+
+  final List<BackupFile> files;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final file in files)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      file.name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                  Text(
+                    formatBytes(file.size),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    _formatDate(file.modified),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.hintColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

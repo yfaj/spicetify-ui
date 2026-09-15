@@ -252,22 +252,24 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final controller = widget.controller;
 
           return Scaffold(
-            body: Column(
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (usesCustomShell)
-                  Titlebar(
-                    appVersion: appVersion,
-                    cliVersion: controller.cliVersion,
-                    state: _dotState(controller),
+                // Outside the main window's own chrome: the log has its own
+                // title bar, and the main title bar must not span both.
+                if (_logOpen)
+                  LogPanel(
+                    lines: controller.log,
+                    onClose: () => setState(() => _logOpen = false),
                   ),
                 Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Column(
                     children: [
-                      if (_logOpen)
-                        LogPanel(
-                          lines: controller.log,
-                          onClose: () => setState(() => _logOpen = false),
+                      if (usesCustomShell)
+                        Titlebar(
+                          appVersion: appVersion,
+                          cliVersion: controller.cliVersion,
+                          state: _dotState(controller),
                         ),
                       Expanded(
                         child: Column(
@@ -288,13 +290,13 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                           ],
                         ),
                       ),
+                      BottomBar(
+                        controller: controller,
+                        logOpen: _logOpen,
+                        onToggleLog: () => setState(() => _logOpen = !_logOpen),
+                      ),
                     ],
                   ),
-                ),
-                BottomBar(
-                  controller: controller,
-                  logOpen: _logOpen,
-                  onToggleLog: () => setState(() => _logOpen = !_logOpen),
                 ),
               ],
             ),

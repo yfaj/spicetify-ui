@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 
 /// A log view that reads as a second floating window docked to the left of
-/// the content, rather than a drawer inside it. Same window, own chrome.
+/// the content, rather than a drawer inside it. It carries its own title bar
+/// so it does not look like a pane of the window beside it.
 class LogPanel extends StatefulWidget {
   const LogPanel({
     super.key,
@@ -46,15 +47,16 @@ class _LogPanelState extends State<LogPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final divider = theme.dividerColor.withValues(alpha: 0.5);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(8, 0, 0, 8),
       child: Container(
         width: widget.width,
         decoration: BoxDecoration(
           color: const Color(0xFF0A0A0A),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+          border: Border.all(color: divider),
           boxShadow: const [
             BoxShadow(
               color: Color(0x66000000),
@@ -63,64 +65,89 @@ class _LogPanelState extends State<LogPanel> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 4, 4),
-              child: Row(
-                children: [
-                  Text(
-                    'LOG',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${widget.lines.length}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.hintColor,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 14),
-                    tooltip: 'Hide log',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: widget.onClose,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: widget.lines.isEmpty
-                  ? Center(
-                      child: Text(
-                        'no output yet',
-                        style: theme.textTheme.bodySmall,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(7),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 44,
+                child: Row(
+                  children: [
+                    const SizedBox(width: 12),
+                    Icon(Icons.subject, size: 15, color: theme.hintColor),
+                    const SizedBox(width: 8),
+                    Text('Log', style: theme.textTheme.bodyMedium),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${widget.lines.length}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.hintColor,
                       ),
-                    )
-                  : ListView.builder(
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
-                      itemCount: widget.lines.length,
-                      itemBuilder: (context, index) {
-                        final line = widget.lines[index];
-                        return Text(
-                          line.text,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontFamily: 'monospace',
-                            fontSize: 10.5,
-                            color: line.stream == LogStream.stderr
-                                ? const Color(0xFFEF4444)
-                                : null,
-                          ),
-                        );
-                      },
                     ),
-            ),
-          ],
+                    const Spacer(),
+                    _PanelButton(
+                      icon: Icons.close,
+                      tooltip: 'Hide log',
+                      onTap: widget.onClose,
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: divider),
+              Expanded(
+                child: widget.lines.isEmpty
+                    ? Center(
+                        child: Text(
+                          'no output yet',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                        itemCount: widget.lines.length,
+                        itemBuilder: (context, index) {
+                          final line = widget.lines[index];
+                          return Text(
+                            line.text,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace',
+                              fontSize: 10.5,
+                              color: line.stream == LogStream.stderr
+                                  ? const Color(0xFFEF4444)
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _PanelButton extends StatelessWidget {
+  const _PanelButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(width: 40, height: 44, child: Icon(icon, size: 15)),
       ),
     );
   }
