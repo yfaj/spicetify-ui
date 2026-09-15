@@ -63,5 +63,43 @@ void main() {
         throwsUnsupportedError,
       );
     });
+
+    test('strips ANSI escape sequences from captured lines', () async {
+      final runner = Platform.isWindows
+          ? SystemCommandRunner(
+              'cmd.exe',
+              baseArgs: const ['/c', 'echo \x1B[96m\x1B[96m-\x1B[0m\x1B[0m \x1B[97mok\x1B[0m'],
+            )
+          : SystemCommandRunner(
+              '/bin/sh',
+              baseArgs: const ['-c', r'printf "\033[96m\033[96m-\033[0m\033[0m \033[97mok\033[0m\n"'],
+            );
+
+      final result = await runner.run(const []);
+
+      expect(result.output, '- ok');
+      expect(result.output, isNot(contains('\x1B')));
+    });
+  });
+
+  group('stripAnsi', () {
+    test('removes CSI colour codes', () {
+      expect(stripAnsi('\x1B[96m\x1B[96m-\x1B[0m\x1B[0m \x1B[97mApplying\x1B[0m'), '- Applying');
+    });
+
+    test('removes a leading success marker and keeps the message', () {
+      expect(
+        stripAnsi('\x1B[32m\x1B[32m success \x1B[0m\x1B[0m Applied additional modifications'),
+        ' success  Applied additional modifications',
+      );
+    });
+
+    test('leaves plain text untouched', () {
+      expect(stripAnsi('plain text'), 'plain text');
+    });
+
+    test('removes an OSC sequence terminated by BEL', () {
+      expect(stripAnsi('\x1B]0;title\x07after'), 'after');
+    });
   });
 }

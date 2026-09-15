@@ -31,6 +31,12 @@ abstract interface class CommandRunner {
   });
 }
 
+final _ansiPattern = RegExp(
+  r'\x1B(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07\x1B]*(?:\x07|\x1B\\)|[@-Z\\-_])',
+);
+
+String stripAnsi(String text) => text.replaceAll(_ansiPattern, '');
+
 class SystemCommandRunner implements CommandRunner {
   SystemCommandRunner(this.executable, {this.baseArgs = const []});
 
@@ -54,7 +60,7 @@ class SystemCommandRunner implements CommandRunner {
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .forEach((text) {
-            final line = LogLine(text, kind);
+            final line = LogLine(stripAnsi(text), kind);
             lines.add(line);
             onLine?.call(line);
           });
