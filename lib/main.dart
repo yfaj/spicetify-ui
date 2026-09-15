@@ -17,6 +17,7 @@ import 'package:spicetify_ui/ui/shell/app_window.dart';
 import 'package:spicetify_ui/ui/shell/tabs.dart';
 import 'package:spicetify_ui/ui/shell/titlebar.dart';
 import 'package:spicetify_ui/ui/widgets/bottom_bar.dart';
+import 'package:spicetify_ui/ui/widgets/log_panel.dart';
 import 'package:spicetify_ui/ui/widgets/status_dot.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -146,7 +147,9 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   int _tab = 0;
+  bool _logOpen = false;
   bool _noticeOpen = false;
+  bool _lastCommandFailedSeen = false;
 
   @override
   void initState() {
@@ -163,6 +166,12 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   }
 
   void _onControllerChanged() {
+    final failed = widget.controller.lastCommandFailed;
+    if (failed && !_lastCommandFailedSeen && !_logOpen) {
+      setState(() => _logOpen = true);
+    }
+    _lastCommandFailedSeen = failed;
+
     final notice = widget.controller.notice;
     if (notice == null || _noticeOpen) return;
 
@@ -251,20 +260,42 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                     cliVersion: controller.cliVersion,
                     state: _dotState(controller),
                   ),
-                const SizedBox(height: 8),
-                TabStrip(
-                  index: _tab,
-                  onChanged: (i) => setState(() => _tab = i),
-                ),
-                const SizedBox(height: 8),
                 Expanded(
-                  child: switch (_tab) {
-                    0 => SetupScreen(controller: controller),
-                    1 => ConfigScreen(controller: controller),
-                    _ => BackupScreen(controller: controller),
-                  },
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_logOpen)
+                        LogPanel(
+                          lines: controller.log,
+                          onClose: () => setState(() => _logOpen = false),
+                        ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 8),
+                            TabStrip(
+                              index: _tab,
+                              onChanged: (i) => setState(() => _tab = i),
+                            ),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: switch (_tab) {
+                                0 => SetupScreen(controller: controller),
+                                1 => ConfigScreen(controller: controller),
+                                _ => BackupScreen(controller: controller),
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                BottomBar(controller: controller),
+                BottomBar(
+                  controller: controller,
+                  logOpen: _logOpen,
+                  onToggleLog: () => setState(() => _logOpen = !_logOpen),
+                ),
               ],
             ),
           );

@@ -4,7 +4,7 @@ import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
 import 'package:spicetify_ui/ui/widgets/bottom_bar.dart';
-import 'package:spicetify_ui/ui/widgets/log_drawer.dart';
+import 'package:spicetify_ui/ui/widgets/log_panel.dart';
 
 class FakeProbe implements FileProbe {
   FakeProbe(this.existing);
@@ -52,16 +52,22 @@ AppController buildController({required bool found}) {
   );
 }
 
+Widget bar(AppController controller, {bool logOpen = false}) => MaterialApp(
+  home: Scaffold(
+    body: BottomBar(
+      controller: controller,
+      logOpen: logOpen,
+      onToggleLog: () {},
+    ),
+  ),
+);
+
 void main() {
   testWidgets('always shows apply and restore', (tester) async {
     final controller = buildController(found: true);
     await controller.refresh();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: BottomBar(controller: controller)),
-      ),
-    );
+    await tester.pumpWidget(bar(controller));
 
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('Restore'), findsOneWidget);
@@ -73,11 +79,7 @@ void main() {
     final controller = buildController(found: false);
     await controller.refresh();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: BottomBar(controller: controller)),
-      ),
-    );
+    await tester.pumpWidget(bar(controller));
 
     final apply = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Apply'),
@@ -94,11 +96,7 @@ void main() {
     final controller = buildController(found: true);
     await controller.refresh();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: BottomBar(controller: controller)),
-      ),
-    );
+    await tester.pumpWidget(bar(controller));
 
     final apply = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Apply'),
@@ -106,45 +104,83 @@ void main() {
     expect(apply.onPressed, isNotNull);
   });
 
-  testWidgets('a failing command opens the log drawer with the exit code', (
-    tester,
-  ) async {
+  testWidgets('the toggle reports taps', (tester) async {
+    var toggled = 0;
     final controller = buildController(found: true);
-    await controller.refresh();
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: BottomBar(controller: controller)),
+        home: Scaffold(
+          body: BottomBar(
+            controller: controller,
+            logOpen: false,
+            onToggleLog: () => toggled++,
+          ),
+        ),
       ),
     );
 
-    await tester.tap(find.text('Restore'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pump();
 
-    expect(controller.lastCommandFailed, isTrue);
-    expect(find.byType(LogDrawer), findsOneWidget);
-    expect(find.text('exit 1'), findsOneWidget);
+    expect(toggled, 1);
   });
 
-  testWidgets('the log drawer shows an empty state', (tester) async {
+  testWidgets('the toggle points the way the panel will open', (tester) async {
+    final controller = buildController(found: true);
+
+    await tester.pumpWidget(bar(controller, logOpen: true));
+    expect(find.byIcon(Icons.chevron_left), findsOneWidget);
+
+    await tester.pumpWidget(bar(controller));
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+  });
+
+  testWidgets('the log panel shows an empty state', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: LogDrawer(lines: [])),
+      MaterialApp(
+        home: Scaffold(
+          body: LogPanel(lines: const [], onClose: () {}),
+        ),
       ),
     );
 
     expect(find.text('no output yet'), findsOneWidget);
   });
 
-  testWidgets('the log drawer renders lines', (tester) async {
+  testWidgets('the log panel renders lines and counts them', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
-          body: LogDrawer(lines: [LogLine('applied', LogStream.stdout)]),
+          body: LogPanel(
+            lines: const [
+              LogLine('applied', LogStream.stdout),
+              LogLine('boom', LogStream.stderr),
+            ],
+            onClose: () {},
+          ),
         ),
       ),
     );
 
     expect(find.text('applied'), findsOneWidget);
+    expect(find.text('boom'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets('the log panel closes when asked', (tester) async {
+    var closed = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LogPanel(lines: const [], onClose: () => closed++),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+
+    expect(closed, 1);
   });
 }
