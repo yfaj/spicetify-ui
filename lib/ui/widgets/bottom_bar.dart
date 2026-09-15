@@ -13,6 +13,27 @@ class BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<BottomBar> {
   bool _logOpen = false;
+  bool _lastCommandFailedSeen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    final failed = widget.controller.lastCommandFailed;
+    if (failed && !_lastCommandFailedSeen && !_logOpen) {
+      setState(() => _logOpen = true);
+    }
+    _lastCommandFailedSeen = failed;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +42,8 @@ class _BottomBarState extends State<BottomBar> {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final canRun = controller.cliStatus == CliStatus.found && !controller.busy;
+        final canRun =
+            controller.cliStatus == CliStatus.found && !controller.busy;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -33,17 +55,14 @@ class _BottomBarState extends State<BottomBar> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(_logOpen ? Icons.expand_more : Icons.expand_less, size: 18),
+                    icon: Icon(
+                      _logOpen ? Icons.expand_more : Icons.expand_less,
+                      size: 18,
+                    ),
                     onPressed: () => setState(() => _logOpen = !_logOpen),
                     tooltip: 'Log',
                   ),
                   const Spacer(),
-                  Checkbox(
-                    value: controller.adminEnabled,
-                    onChanged: (value) => controller.setAdmin(value ?? false),
-                  ),
-                  const Text('admin'),
-                  const SizedBox(width: 12),
                   FilledButton(
                     onPressed: canRun ? controller.applyChanges : null,
                     child: const Text('Apply'),

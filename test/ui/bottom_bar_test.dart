@@ -19,7 +19,10 @@ class ScriptedRunner implements CommandRunner {
   final Map<String, String> responses;
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     final output = responses[args.join(' ')];
     if (output == null) return const CommandResult(exitCode: 1, lines: []);
     final line = LogLine(output, LogStream.stdout);
@@ -50,29 +53,38 @@ AppController buildController({required bool found}) {
 }
 
 void main() {
-  testWidgets('always shows apply, restore, and the admin checkbox', (tester) async {
+  testWidgets('always shows apply and restore', (tester) async {
     final controller = buildController(found: true);
     await controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: BottomBar(controller: controller)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: BottomBar(controller: controller)),
+      ),
+    );
 
     expect(find.text('Apply'), findsOneWidget);
     expect(find.text('Restore'), findsOneWidget);
-    expect(find.byType(Checkbox), findsOneWidget);
   });
 
-  testWidgets('apply and restore are disabled while the CLI is missing', (tester) async {
+  testWidgets('apply and restore are disabled while the CLI is missing', (
+    tester,
+  ) async {
     final controller = buildController(found: false);
     await controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: BottomBar(controller: controller)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: BottomBar(controller: controller)),
+      ),
+    );
 
-    final apply = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Apply'));
-    final restore = tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Restore'));
+    final apply = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Apply'),
+    );
+    final restore = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Restore'),
+    );
 
     expect(apply.onPressed, isNull);
     expect(restore.onPressed, isNull);
@@ -82,41 +94,56 @@ void main() {
     final controller = buildController(found: true);
     await controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: BottomBar(controller: controller)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: BottomBar(controller: controller)),
+      ),
+    );
 
-    final apply = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Apply'));
+    final apply = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Apply'),
+    );
     expect(apply.onPressed, isNotNull);
   });
 
-  testWidgets('the admin checkbox writes back to the controller', (tester) async {
+  testWidgets('a failing command opens the log drawer with the exit code', (
+    tester,
+  ) async {
     final controller = buildController(found: true);
+    await controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: BottomBar(controller: controller)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: BottomBar(controller: controller)),
+      ),
+    );
 
-    await tester.tap(find.byType(Checkbox));
-    await tester.pump();
+    await tester.tap(find.text('Restore'));
+    await tester.pumpAndSettle();
 
-    expect(controller.adminEnabled, isTrue);
+    expect(controller.lastCommandFailed, isTrue);
+    expect(find.byType(LogDrawer), findsOneWidget);
+    expect(find.text('exit 1'), findsOneWidget);
   });
 
   testWidgets('the log drawer shows an empty state', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: LogDrawer(lines: [])),
-    ));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(body: LogDrawer(lines: [])),
+      ),
+    );
 
     expect(find.text('no output yet'), findsOneWidget);
   });
 
   testWidgets('the log drawer renders lines', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: LogDrawer(lines: [LogLine('applied', LogStream.stdout)]),
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: LogDrawer(lines: [LogLine('applied', LogStream.stdout)]),
+        ),
       ),
-    ));
+    );
 
     expect(find.text('applied'), findsOneWidget);
   });

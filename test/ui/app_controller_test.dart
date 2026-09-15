@@ -11,13 +11,21 @@ class FakeProbe implements FileProbe {
   bool exists(String path) => existing.contains(path);
 }
 
+class ThrowingProbe implements FileProbe {
+  @override
+  bool exists(String path) => throw StateError('probe failure');
+}
+
 class ScriptedRunner implements CommandRunner {
   ScriptedRunner(this.responses);
   final Map<String, String> responses;
   final List<List<String>> calls = [];
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     calls.add(args);
     final output = responses[args.join(' ')];
     if (output == null) return const CommandResult(exitCode: 1, lines: []);
@@ -32,7 +40,10 @@ class ThrowingRunner implements CommandRunner {
   final Set<String> throwOn;
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     if (throwOn.contains(args.join(' '))) {
       throw StateError('runner failure');
     }
@@ -45,7 +56,11 @@ class ThrowingRunner implements CommandRunner {
   }
 }
 
-AppController buildController(CommandRunner runner, {String config = '', Set<String> found = const {r'C:\bin\spicetify.exe'}}) {
+AppController buildController(
+  CommandRunner runner, {
+  String config = '',
+  Set<String> found = const {r'C:\bin\spicetify.exe'},
+}) {
   return AppController(
     locator: CliLocator(
       probe: FakeProbe(found),
@@ -63,11 +78,13 @@ AppController buildController(CommandRunner runner, {String config = '', Set<Str
 
 void main() {
   test('reports a found CLI with its version', () async {
-    final controller = buildController(ScriptedRunner(const {
-      '--version': 'spicetify v2.45.0',
-      '-c': r'C:\cfg\config-xpui.ini',
-      'path userdata': r'C:\cfg',
-    }));
+    final controller = buildController(
+      ScriptedRunner(const {
+        '--version': 'spicetify v2.45.0',
+        '-c': r'C:\cfg\config-xpui.ini',
+        'path userdata': r'C:\cfg',
+      }),
+    );
 
     await controller.refresh();
 
@@ -77,7 +94,10 @@ void main() {
   });
 
   test('reports a missing CLI', () async {
-    final controller = buildController(ScriptedRunner(const {}), found: const {});
+    final controller = buildController(
+      ScriptedRunner(const {}),
+      found: const {},
+    );
 
     await controller.refresh();
 
@@ -99,7 +119,8 @@ void main() {
         executableName: 'spicetify.exe',
       ),
       runnerFactory: (_) => runner,
-      configFileReader: (_) => '[Backup]\nversion = 1.3.0.200.gabc\nwith = 2.45.0\n',
+      configFileReader: (_) =>
+          '[Backup]\nversion = 1.3.0.200.gabc\nwith = 2.45.0\n',
       directoryLister: (_) => const [],
       spotifyVersionDetector: () async => '1.3.0.277',
     );
@@ -115,7 +136,10 @@ void main() {
       '--version': '2.45.0',
       '-c': r'C:\cfg\config-xpui.ini',
     });
-    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    final controller = buildController(
+      runner,
+      config: '[Setting]\ninject_css = 1\n',
+    );
     await controller.refresh();
     runner.calls.clear();
 
@@ -130,7 +154,10 @@ void main() {
       '--version': '2.45.0',
       '-c': r'C:\cfg\config-xpui.ini',
     });
-    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    final controller = buildController(
+      runner,
+      config: '[Setting]\ninject_css = 1\n',
+    );
     await controller.refresh();
 
     controller.stage('inject_css', '0');
@@ -146,7 +173,10 @@ void main() {
       'config inject_css 0': 'ok',
       'apply': 'applied',
     });
-    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    final controller = buildController(
+      runner,
+      config: '[Setting]\ninject_css = 1\n',
+    );
     await controller.refresh();
 
     controller.stage('inject_css', '0');
@@ -162,7 +192,10 @@ void main() {
       '--version': '2.45.0',
       '-c': r'C:\cfg\config-xpui.ini',
     });
-    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    final controller = buildController(
+      runner,
+      config: '[Setting]\ninject_css = 1\n',
+    );
     await controller.refresh();
     runner.calls.clear();
 
@@ -195,7 +228,10 @@ void main() {
 
   test('a throwing command clears busy and still propagates', () async {
     final runner = ThrowingRunner(throwOn: const {'restore', 'apply'});
-    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    final controller = buildController(
+      runner,
+      config: '[Setting]\ninject_css = 1\n',
+    );
     await controller.refresh();
 
     controller.stage('inject_css', '0');
@@ -204,9 +240,42 @@ void main() {
 
     await expectLater(controller.restore(), throwsStateError);
     expect(controller.busy, isFalse);
-
-    final refreshController = buildController(ThrowingRunner(throwOn: const {'--version'}));
-    await expectLater(refreshController.refresh(), throwsStateError);
-    expect(refreshController.busy, isFalse);
   });
+
+  test('a throwing --version probe is treated as an absent CLI', () async {
+    final controller = buildController(
+      ThrowingRunner(throwOn: const {'--version'}),
+    );
+
+    await controller.refresh();
+
+    expect(controller.cliStatus, CliStatus.missing);
+    expect(controller.busy, isFalse);
+  });
+
+  test(
+    'a throwing locator leaves a terminal status and logs the error',
+    () async {
+      final runner = ScriptedRunner(const {});
+      final controller = AppController(
+        locator: CliLocator(
+          probe: ThrowingProbe(),
+          runnerFactory: (_) => runner,
+          knownPaths: const [r'C:\bin\spicetify.exe'],
+          environment: const {'PATH': ''},
+          executableName: 'spicetify.exe',
+        ),
+        runnerFactory: (_) => runner,
+        configFileReader: (_) => '',
+        directoryLister: (_) => const [],
+        spotifyVersionDetector: () async => null,
+      );
+
+      await controller.refresh();
+
+      expect(controller.cliStatus, CliStatus.missing);
+      expect(controller.busy, isFalse);
+      expect(controller.log.single.stream, LogStream.stderr);
+    },
+  );
 }

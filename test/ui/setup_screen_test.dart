@@ -19,15 +19,23 @@ class ScriptedRunner implements CommandRunner {
   final List<List<String>> calls = [];
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     calls.add(List.of(args));
     final output = responses[args.join(' ')];
     if (output == null) return const CommandResult(exitCode: 1, lines: []);
-    return CommandResult(exitCode: 0, lines: [LogLine(output, LogStream.stdout)]);
+    return CommandResult(
+      exitCode: 0,
+      lines: [LogLine(output, LogStream.stdout)],
+    );
   }
 }
 
-({AppController controller, ScriptedRunner runner}) buildFixture({required bool found}) {
+({AppController controller, ScriptedRunner runner}) buildFixture({
+  required bool found,
+}) {
   final runner = ScriptedRunner(const {
     '--version': 'spicetify v2.45.0',
     '-c': r'C:\cfg\config-xpui.ini',
@@ -55,11 +63,17 @@ AppController buildController({required bool found}) =>
 
 void main() {
   test('installLinesFor returns Windows lines on Windows', () {
-    expect(installLinesFor(isWindows: true).first, 'winget install Spicetify.Spicetify');
+    expect(
+      installLinesFor(isWindows: true).first,
+      'winget install Spicetify.Spicetify',
+    );
   });
 
   test('installLinesFor returns unix lines elsewhere', () {
-    expect(installLinesFor(isWindows: false).first, 'brew install spicetify-cli');
+    expect(
+      installLinesFor(isWindows: false).first,
+      'brew install spicetify-cli',
+    );
   });
 
   testWidgets('shows install lines when the CLI is missing', (tester) async {
@@ -67,35 +81,51 @@ void main() {
     await controller.refresh();
     expect(controller.cliStatus, CliStatus.missing);
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: SetupScreen(controller: controller, isWindows: true)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
 
     expect(find.text('Spicetify not found'), findsOneWidget);
     expect(find.text('winget install Spicetify.Spicetify'), findsOneWidget);
     expect(find.text('Re-check'), findsOneWidget);
   });
 
-  testWidgets('shows a neutral placeholder while the CLI status is unknown', (tester) async {
+  testWidgets('shows a neutral placeholder while the CLI status is unknown', (
+    tester,
+  ) async {
     final controller = buildController(found: true);
     expect(controller.cliStatus, CliStatus.unknown);
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: SetupScreen(controller: controller, isWindows: true)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
 
     expect(find.text('Checking for Spicetify...'), findsOneWidget);
     expect(find.text('Spicetify not found'), findsNothing);
     expect(find.text('winget install Spicetify.Spicetify'), findsNothing);
   });
 
-  testWidgets('shows version, path, and actions when the CLI is found', (tester) async {
+  testWidgets('shows version, path, and actions when the CLI is found', (
+    tester,
+  ) async {
     final controller = buildController(found: true);
     await controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: SetupScreen(controller: controller, isWindows: true)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
 
     expect(find.textContaining('2.45.0'), findsOneWidget);
     expect(find.text('Backup'), findsOneWidget);
@@ -104,25 +134,57 @@ void main() {
     expect(find.text('Restart'), findsOneWidget);
     expect(find.text('Block updates'), findsOneWidget);
     expect(find.text('Unblock updates'), findsOneWidget);
-    expect(find.text('Watch for changes'), findsOneWidget);
+  });
+
+  testWidgets('offers a bare run when the config file is missing', (
+    tester,
+  ) async {
+    final fixture = buildFixture(found: true);
+    await fixture.controller.refresh();
+    expect(fixture.controller.config, isNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: fixture.controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Config file not found'), findsOneWidget);
+
+    await tester.tap(find.text('Run Spicetify'));
+    await tester.pumpAndSettle();
+
+    expect(fixture.runner.calls.any((args) => args.isEmpty), isTrue);
   });
 
   testWidgets('block and unblock both reach the controller', (tester) async {
     final fixture = buildFixture(found: true);
     await fixture.controller.refresh();
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: SetupScreen(controller: fixture.controller, isWindows: true)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: fixture.controller, isWindows: true),
+        ),
+      ),
+    );
 
     await tester.tap(find.text('Unblock updates'));
     await tester.pumpAndSettle();
 
-    expect(fixture.runner.calls, contains(equals(['spotify-updates', 'unblock'])));
+    expect(
+      fixture.runner.calls,
+      contains(equals(['spotify-updates', 'unblock'])),
+    );
 
     await tester.tap(find.text('Block updates'));
     await tester.pumpAndSettle();
 
-    expect(fixture.runner.calls, contains(equals(['spotify-updates', 'block'])));
+    expect(
+      fixture.runner.calls,
+      contains(equals(['spotify-updates', 'block'])),
+    );
   });
 }

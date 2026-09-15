@@ -36,6 +36,7 @@ class AppController extends ChangeNotifier {
   bool adminEnabled = false;
   bool watchRunning = false;
   bool busy = false;
+  bool lastCommandFailed = false;
 
   final List<LogLine> log = [];
   final Map<String, String> _staged = {};
@@ -45,6 +46,12 @@ class AppController extends ChangeNotifier {
   void _appendLog(LogLine line) {
     log.add(line);
     notifyListeners();
+  }
+
+  void _recordFailure(CommandResult result) {
+    if (result.ok) return;
+    lastCommandFailed = true;
+    _appendLog(LogLine('exit ${result.exitCode}', LogStream.stderr));
   }
 
   Future<void> refresh() async {
@@ -81,6 +88,11 @@ class AppController extends ChangeNotifier {
         backupVersion: config?.value('Backup', 'version'),
         spotifyVersion: spotifyVersion,
       );
+    } catch (error) {
+      if (cliStatus == CliStatus.unknown) {
+        cliStatus = CliStatus.missing;
+      }
+      _appendLog(LogLine('$error', LogStream.stderr));
     } finally {
       busy = false;
       notifyListeners();
@@ -88,7 +100,11 @@ class AppController extends ChangeNotifier {
   }
 
   String? _currentValue(String key) {
-    for (final section in const ['Setting', 'Preprocesses', 'AdditionalOptions']) {
+    for (final section in const [
+      'Setting',
+      'Preprocesses',
+      'AdditionalOptions',
+    ]) {
       final value = config?.value(section, key);
       if (value != null) return value;
     }
@@ -111,10 +127,12 @@ class AppController extends ChangeNotifier {
     if (bridge == null) return;
 
     busy = true;
+    lastCommandFailed = false;
     notifyListeners();
 
     try {
-      await bridge.run(args, onLine: _appendLog);
+      final result = await bridge.run(args, onLine: _appendLog);
+      _recordFailure(result);
     } finally {
       busy = false;
       notifyListeners();
@@ -126,6 +144,7 @@ class AppController extends ChangeNotifier {
     if (bridge == null) return;
 
     busy = true;
+    lastCommandFailed = false;
     notifyListeners();
 
     try {
@@ -134,16 +153,24 @@ class AppController extends ChangeNotifier {
           buildSetArgs(entry.key, entry.value),
           onLine: _appendLog,
         );
-        if (!result.ok) return;
+        if (!result.ok) {
+          _recordFailure(result);
+          return;
+        }
       }
 
       _staged.clear();
-      await bridge.run(const ['apply'], onLine: _appendLog);
+      _recordFailure(await bridge.run(const ['apply'], onLine: _appendLog));
     } finally {
       busy = false;
       notifyListeners();
     }
 
+    await refresh();
+  }
+
+  Future<void> runBare() async {
+    await _run(const []);
     await refresh();
   }
 

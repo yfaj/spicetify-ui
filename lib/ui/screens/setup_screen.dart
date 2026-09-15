@@ -61,13 +61,32 @@ class _Found extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF4ADE80)),
+            const Icon(
+              Icons.check_circle_outline,
+              size: 16,
+              color: Color(0xFF4ADE80),
+            ),
             const SizedBox(width: 8),
-            Text('Spicetify ${controller.cliVersion ?? ''}', style: theme.textTheme.titleMedium),
+            Text(
+              'Spicetify ${controller.cliVersion ?? ''}',
+              style: theme.textTheme.titleMedium,
+            ),
           ],
         ),
         const SizedBox(height: 4),
         Text(controller.cliPath ?? '', style: theme.textTheme.bodySmall),
+        if (controller.config == null) ...[
+          const SizedBox(height: 12),
+          Text(
+            'Config file not found. Run Spicetify once to generate defaults.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          FilledButton.tonal(
+            onPressed: canRun ? controller.runBare : null,
+            child: const Text('Run Spicetify'),
+          ),
+        ],
         const SizedBox(height: 20),
         Wrap(
           spacing: 8,
@@ -87,26 +106,33 @@ class _Found extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            OutlinedButton(onPressed: canRun ? controller.backup : null, child: const Text('Backup')),
-            OutlinedButton(onPressed: canRun ? controller.clearBackup : null, child: const Text('Clear backup')),
-            OutlinedButton(onPressed: canRun ? controller.enableDevtools : null, child: const Text('Enable devtools')),
-            OutlinedButton(onPressed: canRun ? controller.restart : null, child: const Text('Restart')),
+            OutlinedButton(
+              onPressed: canRun ? controller.backup : null,
+              child: const Text('Backup'),
+            ),
+            OutlinedButton(
+              onPressed: canRun ? controller.clearBackup : null,
+              child: const Text('Clear backup'),
+            ),
+            OutlinedButton(
+              onPressed: canRun ? controller.enableDevtools : null,
+              child: const Text('Enable devtools'),
+            ),
+            OutlinedButton(
+              onPressed: canRun ? controller.restart : null,
+              child: const Text('Restart'),
+            ),
             OutlinedButton(
               onPressed: canRun ? () => controller.setBlockUpdates(true) : null,
               child: const Text('Block updates'),
             ),
             OutlinedButton(
-              onPressed: canRun ? () => controller.setBlockUpdates(false) : null,
+              onPressed: canRun
+                  ? () => controller.setBlockUpdates(false)
+                  : null,
               child: const Text('Unblock updates'),
             ),
           ],
-        ),
-        const SizedBox(height: 16),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Watch for changes'),
-          value: controller.watchRunning,
-          onChanged: canRun ? (value) => controller.setWatch(value) : null,
         ),
       ],
     );
@@ -128,7 +154,11 @@ class _Missing extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.cancel_outlined, size: 16, color: Color(0xFFEF4444)),
+            const Icon(
+              Icons.cancel_outlined,
+              size: 16,
+              color: Color(0xFFEF4444),
+            ),
             const SizedBox(width: 8),
             Text('Spicetify not found', style: theme.textTheme.titleMedium),
           ],
@@ -139,7 +169,10 @@ class _Missing extends StatelessWidget {
         for (final line in installLinesFor(isWindows: isWindows))
           _CopyRow(command: line),
         const SizedBox(height: 16),
-        FilledButton(onPressed: controller.refresh, child: const Text('Re-check')),
+        FilledButton(
+          onPressed: controller.refresh,
+          child: const Text('Re-check'),
+        ),
       ],
     );
   }
@@ -166,7 +199,9 @@ class _CopyRow extends StatelessWidget {
           Expanded(
             child: Text(
               command,
-              style: theme.textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+              ),
             ),
           ),
           IconButton(
