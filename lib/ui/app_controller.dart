@@ -63,7 +63,7 @@ class AppController extends ChangeNotifier {
   bool watchRunning = false;
   bool busy = false;
   bool lastCommandFailed = false;
-  bool autoReapplyEnabled = false;
+  bool? autoReapplyEnabled;
   bool? updatesBlocked;
   String? runningCommand;
   String? lastAutoReapply;
@@ -268,7 +268,12 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whether this platform can register the task at all.
+  bool get supportsAutoReapply => _scheduler.isSupported;
+
   Future<void> refreshAutoReapply() async {
+    if (!supportsAutoReapply) return;
+
     autoReapplyEnabled = await _scheduler.isRegistered();
     lastAutoReapply = await readLastAutoReapply();
     updatesBlocked = _readBlockedState();

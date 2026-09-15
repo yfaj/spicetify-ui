@@ -6,6 +6,10 @@ const String autoReapplyTaskName = 'Spicetify UI Auto Reapply';
 const int autoReapplyIntervalMinutes = 15;
 
 abstract interface class TaskScheduler {
+  /// False where no supported scheduler exists, so the UI can hide the
+  /// control rather than show an off toggle for a feature that is absent.
+  bool get isSupported;
+
   Future<bool> isRegistered();
 
   Future<bool> register(String executable);
@@ -21,6 +25,9 @@ class WindowsTaskScheduler implements TaskScheduler {
   }) : _runnerFactory = runnerFactory ?? SystemCommandRunner.new;
 
   final CommandRunner Function(String executable) _runnerFactory;
+
+  @override
+  bool get isSupported => true;
 
   List<String> get _createArgs => [
     '/Create',
@@ -61,6 +68,9 @@ class WindowsTaskScheduler implements TaskScheduler {
 
 class UnsupportedTaskScheduler implements TaskScheduler {
   const UnsupportedTaskScheduler();
+
+  @override
+  bool get isSupported => false;
 
   @override
   Future<bool> isRegistered() async => false;

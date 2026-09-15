@@ -169,9 +169,20 @@ void main() {
     test('reports nothing and refuses every change', () async {
       const scheduler = UnsupportedTaskScheduler();
 
+      expect(scheduler.isSupported, isFalse);
       expect(await scheduler.isRegistered(), isFalse);
       expect(await scheduler.register('/usr/bin/spicetify_ui'), isFalse);
       expect(await scheduler.unregister(), isFalse);
+    });
+  });
+
+  group('WindowsTaskScheduler support', () {
+    test('reports itself as supported', () {
+      final scheduler = WindowsTaskScheduler(
+        runnerFactory: (_) => RecordingRunner(const {}),
+      );
+
+      expect(scheduler.isSupported, isTrue);
     });
   });
 }

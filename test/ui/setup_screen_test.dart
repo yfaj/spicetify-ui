@@ -385,6 +385,26 @@ void main() {
     expect(controller.isRunning(const ['backup']), isFalse);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
+
+  testWidgets('hides the automation group where no scheduler exists', (
+    tester,
+  ) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+    await controller.refreshAutoReapply();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(controller.supportsAutoReapply, isFalse);
+    expect(controller.autoReapplyEnabled, isNull);
+    expect(find.text('Re-apply after Spotify updates'), findsNothing);
+  });
 }
 
 class BlockingRunner implements CommandRunner {
