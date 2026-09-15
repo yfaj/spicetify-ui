@@ -187,10 +187,16 @@ class ActionChoice extends StatelessWidget {
 }
 
 class ActionGroup extends StatelessWidget {
-  const ActionGroup({super.key, required this.label, required this.children});
+  const ActionGroup({
+    super.key,
+    required this.label,
+    required this.children,
+    this.centerLabel = false,
+  });
 
   final String label;
   final List<Widget> children;
+  final bool centerLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -201,9 +207,12 @@ class ActionGroup extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 12, bottom: 2),
-          child: Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 1.1),
+          child: Align(
+            alignment: centerLabel ? Alignment.center : Alignment.centerLeft,
+            child: Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 1.1),
+            ),
           ),
         ),
         for (final child in children) child,

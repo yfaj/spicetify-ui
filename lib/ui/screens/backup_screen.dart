@@ -56,6 +56,7 @@ class BackupScreen extends StatelessWidget {
             children: [
               ActionGroup(
                 label: 'BACKUP',
+                centerLabel: true,
                 children: [_StatusCard(status: status)],
               ),
               ActionGroup(
