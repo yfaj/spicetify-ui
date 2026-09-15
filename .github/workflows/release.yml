@@ -69,7 +69,7 @@ jobs:
               ;;
             macos)
               cd build/macos/Build/Products/Release
-              zip -r "$GITHUB_WORKSPACE/dist/spicetify-ui-$VERSION-macos-arm64.zip" spicetify_ui.app
+              ditto -c -k --keepParent spicetify_ui.app "$GITHUB_WORKSPACE/dist/spicetify-ui-$VERSION-macos-arm64.zip"
               ;;
           esac
 
