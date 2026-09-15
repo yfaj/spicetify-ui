@@ -27,7 +27,25 @@ class ScriptedRunner implements CommandRunner {
   }
 }
 
-AppController buildController(ScriptedRunner runner, {String config = '', Set<String> found = const {r'C:\bin\spicetify.exe'}}) {
+class ThrowingRunner implements CommandRunner {
+  ThrowingRunner({this.throwOn = const {}});
+  final Set<String> throwOn;
+
+  @override
+  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+    if (throwOn.contains(args.join(' '))) {
+      throw StateError('runner failure');
+    }
+    final line = LogLine(
+      args.join(' ') == '--version' ? '2.45.0' : r'C:\cfg\config-xpui.ini',
+      LogStream.stdout,
+    );
+    onLine?.call(line);
+    return CommandResult(exitCode: 0, lines: [line]);
+  }
+}
+
+AppController buildController(CommandRunner runner, {String config = '', Set<String> found = const {r'C:\bin\spicetify.exe'}}) {
   return AppController(
     locator: CliLocator(
       probe: FakeProbe(found),
@@ -173,5 +191,22 @@ void main() {
   test('admin starts disabled', () {
     final controller = buildController(ScriptedRunner(const {}));
     expect(controller.adminEnabled, isFalse);
+  });
+
+  test('a throwing command clears busy and still propagates', () async {
+    final runner = ThrowingRunner(throwOn: const {'restore', 'apply'});
+    final controller = buildController(runner, config: '[Setting]\ninject_css = 1\n');
+    await controller.refresh();
+
+    controller.stage('inject_css', '0');
+    await expectLater(controller.applyChanges(), throwsStateError);
+    expect(controller.busy, isFalse);
+
+    await expectLater(controller.restore(), throwsStateError);
+    expect(controller.busy, isFalse);
+
+    final refreshController = buildController(ThrowingRunner(throwOn: const {'--version'}));
+    await expectLater(refreshController.refresh(), throwsStateError);
+    expect(refreshController.busy, isFalse);
   });
 }

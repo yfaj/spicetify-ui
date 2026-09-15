@@ -51,40 +51,40 @@ class AppController extends ChangeNotifier {
     busy = true;
     notifyListeners();
 
-    final candidate = await _locator.locate();
+    try {
+      final candidate = await _locator.locate();
 
-    if (candidate == null) {
-      cliStatus = CliStatus.missing;
-      cliVersion = null;
-      cliPath = null;
-      cliSource = null;
-      config = null;
-      _bridge = null;
+      if (candidate == null) {
+        cliStatus = CliStatus.missing;
+        cliVersion = null;
+        cliPath = null;
+        cliSource = null;
+        config = null;
+        _bridge = null;
+        return;
+      }
+
+      cliStatus = CliStatus.found;
+      cliVersion = candidate.version;
+      cliPath = candidate.path;
+      cliSource = candidate.source;
+
+      _bridge = CliBridge(
+        _runnerFactory(candidate.path),
+        configFileReader: _configFileReader,
+        directoryLister: _directoryLister,
+      );
+
+      config = await _bridge!.readConfig();
+      spotifyVersion = await _spotifyVersionDetector();
+      needsReapply = reapply.needsReapply(
+        backupVersion: config?.value('Backup', 'version'),
+        spotifyVersion: spotifyVersion,
+      );
+    } finally {
       busy = false;
       notifyListeners();
-      return;
     }
-
-    cliStatus = CliStatus.found;
-    cliVersion = candidate.version;
-    cliPath = candidate.path;
-    cliSource = candidate.source;
-
-    _bridge = CliBridge(
-      _runnerFactory(candidate.path),
-      configFileReader: _configFileReader,
-      directoryLister: _directoryLister,
-    );
-
-    config = await _bridge!.readConfig();
-    spotifyVersion = await _spotifyVersionDetector();
-    needsReapply = reapply.needsReapply(
-      backupVersion: config?.value('Backup', 'version'),
-      spotifyVersion: spotifyVersion,
-    );
-
-    busy = false;
-    notifyListeners();
   }
 
   String? _currentValue(String key) {
@@ -113,10 +113,12 @@ class AppController extends ChangeNotifier {
     busy = true;
     notifyListeners();
 
-    await bridge.run(args, onLine: _appendLog);
-
-    busy = false;
-    notifyListeners();
+    try {
+      await bridge.run(args, onLine: _appendLog);
+    } finally {
+      busy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> applyChanges() async {
@@ -126,23 +128,22 @@ class AppController extends ChangeNotifier {
     busy = true;
     notifyListeners();
 
-    for (final entry in _staged.entries) {
-      final result = await bridge.run(
-        buildSetArgs(entry.key, entry.value),
-        onLine: _appendLog,
-      );
-      if (!result.ok) {
-        busy = false;
-        notifyListeners();
-        return;
+    try {
+      for (final entry in _staged.entries) {
+        final result = await bridge.run(
+          buildSetArgs(entry.key, entry.value),
+          onLine: _appendLog,
+        );
+        if (!result.ok) return;
       }
+
+      _staged.clear();
+      await bridge.run(const ['apply'], onLine: _appendLog);
+    } finally {
+      busy = false;
+      notifyListeners();
     }
 
-    _staged.clear();
-    await bridge.run(const ['apply'], onLine: _appendLog);
-
-    busy = false;
-    notifyListeners();
     await refresh();
   }
 
