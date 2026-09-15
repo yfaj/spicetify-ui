@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
+import 'package:spicetify_ui/core/platform/scheduler.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
 import 'package:spicetify_ui/ui/screens/setup_screen.dart';
 
@@ -14,8 +15,9 @@ class FakeProbe implements FileProbe {
 }
 
 class ScriptedRunner implements CommandRunner {
-  ScriptedRunner(this.responses);
+  ScriptedRunner(this.responses, {this.failOn = const {}});
   final Map<String, String> responses;
+  final Set<String> failOn;
   final List<List<String>> calls = [];
 
   @override
@@ -24,7 +26,13 @@ class ScriptedRunner implements CommandRunner {
     void Function(LogLine line)? onLine,
   }) async {
     calls.add(List.of(args));
-    final output = responses[args.join(' ')];
+    final key = args.join(' ');
+    if (failOn.contains(key)) {
+      final line = LogLine('refused', LogStream.stderr);
+      onLine?.call(line);
+      return CommandResult(exitCode: 1, lines: [line]);
+    }
+    final output = responses[key];
     if (output == null) return const CommandResult(exitCode: 1, lines: []);
     return CommandResult(
       exitCode: 0,
@@ -35,11 +43,14 @@ class ScriptedRunner implements CommandRunner {
 
 ({AppController controller, ScriptedRunner runner}) buildFixture({
   required bool found,
+  bool blockSucceeds = true,
 }) {
   final runner = ScriptedRunner(const {
     '--version': 'spicetify v2.45.0',
     '-c': r'C:\cfg\config-xpui.ini',
-  });
+    'spotify-updates block': 'ok',
+    'spotify-updates unblock': 'ok',
+  }, failOn: blockSucceeds ? const {} : const {'spotify-updates block'});
 
   final controller = AppController(
     locator: CliLocator(
@@ -53,13 +64,18 @@ class ScriptedRunner implements CommandRunner {
     configFileReader: (_) => '',
     directoryLister: (_) => const [],
     spotifyVersionDetector: () async => null,
+    scheduler: const UnsupportedTaskScheduler(),
+    readBlockedState: () => null,
+    writeBlockedState: (_) {},
   );
 
   return (controller: controller, runner: runner);
 }
 
-AppController buildController({required bool found}) =>
-    buildFixture(found: found).controller;
+AppController buildController({
+  required bool found,
+  bool blockSucceeds = true,
+}) => buildFixture(found: found, blockSucceeds: blockSucceeds).controller;
 
 void main() {
   test('installLinesFor returns Windows lines on Windows', () {
@@ -154,6 +170,54 @@ void main() {
     expect(find.text('Backup'), findsOneWidget);
   });
 
+  testWidgets('offers block and unblock buttons while the state is unknown', (
+    tester,
+  ) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+    await controller.refreshAutoReapply();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(controller.updatesBlocked, isNull);
+    expect(find.text('Block'), findsOneWidget);
+    expect(find.text('Unblock'), findsOneWidget);
+    expect(find.text('Block Spotify updates'), findsNothing);
+  });
+
+  testWidgets('shows a toggle once this app has set the state', (tester) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+    await controller.setBlockUpdates(true);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(controller.updatesBlocked, isTrue);
+    expect(find.text('Block Spotify updates'), findsOneWidget);
+    expect(find.text('Block'), findsNothing);
+    expect(find.text('Unblock'), findsNothing);
+  });
+
+  testWidgets('a failed block does not record a state', (tester) async {
+    final controller = buildController(found: true, blockSucceeds: false);
+    await controller.refresh();
+    await controller.setBlockUpdates(true);
+
+    expect(controller.updatesBlocked, isNull);
+  });
+
   testWidgets('does not repeat the CLI version the titlebar already shows', (
     tester,
   ) async {
@@ -216,14 +280,20 @@ void main() {
       contains(equals(['spotify-updates', 'unblock'])),
     );
 
-    await tester.ensureVisible(find.text('Block'));
+    // Setting it makes the state known, so the buttons give way to a toggle.
+    expect(find.text('Block'), findsNothing);
+    expect(find.text('Block Spotify updates'), findsOneWidget);
+    expect(fixture.controller.updatesBlocked, isFalse);
+
+    await tester.ensureVisible(find.text('Block Spotify updates'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Block'));
+    await tester.tap(find.text('Block Spotify updates'));
     await tester.pumpAndSettle();
 
     expect(
       fixture.runner.calls,
       contains(equals(['spotify-updates', 'block'])),
     );
+    expect(fixture.controller.updatesBlocked, isTrue);
   });
 }

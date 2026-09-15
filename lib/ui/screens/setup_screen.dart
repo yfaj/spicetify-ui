@@ -165,24 +165,35 @@ class _Found extends StatelessWidget {
           ActionGroup(
             label: 'SPOTIFY UPDATES',
             children: [
-              ActionChoice(
-                title: 'Spotify updates',
-                subtitle: 'Blocking patches Spotify.exe and cannot be queried',
-                actions: [
-                  OutlinedButton(
-                    onPressed: canRun
-                        ? () => controller.setBlockUpdates(true)
-                        : null,
-                    child: const Text('Block'),
-                  ),
-                  OutlinedButton(
-                    onPressed: canRun
-                        ? () => controller.setBlockUpdates(false)
-                        : null,
-                    child: const Text('Unblock'),
-                  ),
-                ],
-              ),
+              // The CLI has no query for this, so a toggle can only be
+              // truthful once this app has set it. Until then, offer the
+              // explicit choices.
+              if (controller.updatesBlocked == null)
+                ActionChoice(
+                  title: 'Spotify updates',
+                  subtitle: 'Blocking patches Spotify.exe · not yet set here',
+                  actions: [
+                    OutlinedButton(
+                      onPressed: canRun
+                          ? () => controller.setBlockUpdates(true)
+                          : null,
+                      child: const Text('Block'),
+                    ),
+                    OutlinedButton(
+                      onPressed: canRun
+                          ? () => controller.setBlockUpdates(false)
+                          : null,
+                      child: const Text('Unblock'),
+                    ),
+                  ],
+                )
+              else
+                ActionToggle(
+                  title: 'Block Spotify updates',
+                  subtitle: 'Stops Spotify from updating itself',
+                  value: controller.updatesBlocked!,
+                  onChanged: canRun ? controller.setBlockUpdates : null,
+                ),
             ],
           ),
       ],

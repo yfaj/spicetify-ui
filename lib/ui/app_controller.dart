@@ -6,6 +6,7 @@ import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/config/config_parser.dart';
 import 'package:spicetify_ui/core/config/reapply.dart' as reapply;
+import 'package:spicetify_ui/core/platform/app_state.dart';
 import 'package:spicetify_ui/core/platform/scheduler.dart';
 
 enum CliStatus { unknown, missing, found }
@@ -30,9 +31,13 @@ class AppController extends ChangeNotifier {
     this._directoryLister,
     Future<String?> Function()? spotifyVersionDetector,
     TaskScheduler? scheduler,
+    bool? Function()? readBlockedState,
+    void Function(bool value)? writeBlockedState,
   }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null),
        _scheduler =
-           scheduler ?? taskSchedulerFor(isWindows: Platform.isWindows);
+           scheduler ?? taskSchedulerFor(isWindows: Platform.isWindows),
+       _readBlockedState = readBlockedState ?? readUpdatesBlocked,
+       _writeBlockedState = writeBlockedState ?? writeUpdatesBlocked;
 
   final CliLocator _locator;
   final CommandRunner Function(String executable) _runnerFactory;
@@ -40,6 +45,8 @@ class AppController extends ChangeNotifier {
   final List<String> Function(String path)? _directoryLister;
   final Future<String?> Function() _spotifyVersionDetector;
   final TaskScheduler _scheduler;
+  final bool? Function() _readBlockedState;
+  final void Function(bool value) _writeBlockedState;
 
   CliBridge? _bridge;
 
@@ -57,6 +64,7 @@ class AppController extends ChangeNotifier {
   bool busy = false;
   bool lastCommandFailed = false;
   bool autoReapplyEnabled = false;
+  bool? updatesBlocked;
   String? lastAutoReapply;
   CommandNotice? notice;
 
@@ -231,8 +239,15 @@ class AppController extends ChangeNotifier {
   Future<void> upgrade() => _run(const ['upgrade']);
   Future<void> refreshTheme() => _run(const ['refresh']);
 
-  Future<void> setBlockUpdates(bool blocked) =>
-      _run(['spotify-updates', blocked ? 'block' : 'unblock']);
+  Future<void> setBlockUpdates(bool blocked) async {
+    await _run(['spotify-updates', blocked ? 'block' : 'unblock']);
+
+    if (lastCommandFailed) return;
+
+    updatesBlocked = blocked;
+    _writeBlockedState(blocked);
+    notifyListeners();
+  }
 
   Future<void> setWatch(bool running) async {
     watchRunning = running;
@@ -247,6 +262,7 @@ class AppController extends ChangeNotifier {
   Future<void> refreshAutoReapply() async {
     autoReapplyEnabled = await _scheduler.isRegistered();
     lastAutoReapply = await readLastAutoReapply();
+    updatesBlocked = _readBlockedState();
     notifyListeners();
   }
 
