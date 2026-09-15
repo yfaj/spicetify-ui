@@ -29,11 +29,13 @@ class ActionRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.busy = false,
   });
 
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +52,23 @@ class ActionRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: enabled ? null : theme.disabledColor,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: enabled ? null : theme.disabledColor,
+                        ),
+                      ),
+                      if (busy) ...[
+                        const SizedBox(width: 8),
+                        const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 1.8),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     subtitle,

@@ -101,6 +101,7 @@ class _Found extends StatelessWidget {
               title: 'Upgrade',
               subtitle: 'Update Spicetify itself',
               onTap: canRun ? controller.upgrade : null,
+              busy: controller.isRunning(const ['upgrade']),
             ),
           ],
         ),
@@ -111,16 +112,19 @@ class _Found extends StatelessWidget {
               title: 'Backup',
               subtitle: 'Store a clean copy of Spotify',
               onTap: canRun ? controller.backup : null,
+              busy: controller.isRunning(const ['backup']),
             ),
             ActionRow(
               title: 'Clear backup',
               subtitle: 'Delete the stored backup files',
               onTap: canRun ? controller.clearBackup : null,
+              busy: controller.isRunning(const ['clear']),
             ),
             ActionRow(
               title: 'Enable devtools',
               subtitle: 'Enable it now · Ctrl+Shift+I inside Spotify',
               onTap: canRun ? controller.enableDevtools : null,
+              busy: controller.isRunning(const ['enable-devtools']),
             ),
             if (controller.config != null)
               ActionToggle(
@@ -138,6 +142,7 @@ class _Found extends StatelessWidget {
               title: 'Restart',
               subtitle: 'Restart the Spotify client',
               onTap: canRun ? controller.restart : null,
+              busy: controller.isRunning(const ['restart']),
             ),
           ],
         ),

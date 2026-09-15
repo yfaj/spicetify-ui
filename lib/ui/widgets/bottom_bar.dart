@@ -66,12 +66,18 @@ class _BottomBarState extends State<BottomBar> {
                   const Spacer(),
                   FilledButton(
                     onPressed: canRun ? controller.applyChanges : null,
-                    child: const Text('Apply'),
+                    child: _ButtonLabel(
+                      'Apply',
+                      busy: controller.isRunning(const ['apply']),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   OutlinedButton(
                     onPressed: canRun ? controller.restore : null,
-                    child: const Text('Restore'),
+                    child: _ButtonLabel(
+                      'Restore',
+                      busy: controller.isRunning(const ['restore']),
+                    ),
                   ),
                 ],
               ),
@@ -79,6 +85,31 @@ class _BottomBarState extends State<BottomBar> {
           ],
         );
       },
+    );
+  }
+}
+
+class _ButtonLabel extends StatelessWidget {
+  const _ButtonLabel(this.text, {required this.busy});
+
+  final String text;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(text),
+        if (busy) ...[
+          const SizedBox(width: 8),
+          const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 1.8),
+          ),
+        ],
+      ],
     );
   }
 }

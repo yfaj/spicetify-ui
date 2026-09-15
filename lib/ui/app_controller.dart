@@ -65,6 +65,7 @@ class AppController extends ChangeNotifier {
   bool lastCommandFailed = false;
   bool autoReapplyEnabled = false;
   bool? updatesBlocked;
+  String? runningCommand;
   String? lastAutoReapply;
   CommandNotice? notice;
 
@@ -185,16 +186,22 @@ class AppController extends ChangeNotifier {
 
     busy = true;
     lastCommandFailed = false;
+    runningCommand = args.join(' ');
     notifyListeners();
 
     try {
       final result = await bridge.run(args, onLine: _appendLog);
       _recordFailure(result);
     } finally {
+      runningCommand = null;
       busy = false;
       notifyListeners();
     }
   }
+
+  /// True while [args] is the command currently in flight, so a row can show
+  /// its own progress instead of every row looking busy at once.
+  bool isRunning(List<String> args) => runningCommand == args.join(' ');
 
   Future<void> applyChanges() async {
     final bridge = _bridge;
@@ -202,6 +209,7 @@ class AppController extends ChangeNotifier {
 
     busy = true;
     lastCommandFailed = false;
+    runningCommand = 'apply';
     notifyListeners();
 
     try {
@@ -219,6 +227,7 @@ class AppController extends ChangeNotifier {
       _staged.clear();
       _recordFailure(await bridge.run(const ['apply'], onLine: _appendLog));
     } finally {
+      runningCommand = null;
       busy = false;
       notifyListeners();
     }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spicetify_ui/core/cli/cli_locator.dart';
@@ -337,4 +339,79 @@ void main() {
 
     expect(find.text('Always enable devtools'), findsOneWidget);
   });
+
+  testWidgets('shows a spinner beside the command that is still running', (
+    tester,
+  ) async {
+    final runner = BlockingRunner();
+    final controller = AppController(
+      locator: CliLocator(
+        probe: FakeProbe({r'C:\bin\spicetify.exe'}),
+        runnerFactory: (_) => runner,
+        knownPaths: const [r'C:\bin\spicetify.exe'],
+        environment: const {'PATH': ''},
+        executableName: 'spicetify.exe',
+      ),
+      runnerFactory: (_) => runner,
+      configFileReader: (_) => '',
+      directoryLister: (_) => const [],
+      spotifyVersionDetector: () async => null,
+      scheduler: const UnsupportedTaskScheduler(),
+      readBlockedState: () => null,
+      writeBlockedState: (_) {},
+    );
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(controller: controller, isWindows: true),
+        ),
+      ),
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    unawaited(controller.backup());
+    await tester.pump();
+
+    expect(controller.isRunning(const ['backup']), isTrue);
+    expect(controller.isRunning(const ['restart']), isFalse);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    runner.completer.complete(const CommandResult(exitCode: 0, lines: []));
+    await tester.pumpAndSettle();
+
+    expect(controller.isRunning(const ['backup']), isFalse);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+}
+
+class BlockingRunner implements CommandRunner {
+  final completer = Completer<CommandResult>();
+
+  @override
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) {
+    final key = args.join(' ');
+    if (key == '--version') {
+      return Future.value(
+        const CommandResult(
+          exitCode: 0,
+          lines: [LogLine('spicetify v2.45.0', LogStream.stdout)],
+        ),
+      );
+    }
+    if (key == '-c') {
+      return Future.value(
+        const CommandResult(
+          exitCode: 0,
+          lines: [LogLine(r'C:\cfg\config-xpui.ini', LogStream.stdout)],
+        ),
+      );
+    }
+    return completer.future;
+  }
 }
