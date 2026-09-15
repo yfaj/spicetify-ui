@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import 'package:spicetify_ui/core/auto_reapply.dart';
+import 'package:spicetify_ui/core/cli/cli_bridge.dart';
 import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/platform/platform_paths.dart';
+import 'package:spicetify_ui/core/platform/scheduler.dart';
 import 'package:spicetify_ui/core/platform/spotify_version.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
 import 'package:spicetify_ui/ui/screens/config_screen.dart';
@@ -70,10 +73,63 @@ AppController buildProductionController() {
 
 Widget buildApp() => SpicetifyApp(controller: buildProductionController());
 
-void main() async {
+Future<void> main(List<String> args) async {
+  if (args.contains('--check')) {
+    await runHeadlessAutoReapply();
+    return;
+  }
+
   WidgetsFlutterBinding.ensureInitialized();
   await configureWindow();
   runApp(buildApp());
+}
+
+/// Scheduled-task entry point. Runs without a window, re-applies the patch if
+/// Spotify has moved on, writes one log line, and exits.
+Future<void> runHeadlessAutoReapply() async {
+  final env = Platform.environment;
+  final home = env['HOME'] ?? env['USERPROFILE'] ?? '';
+  final isWindows = Platform.isWindows;
+
+  CommandRunner makeRunner(String executable) =>
+      SystemCommandRunner(executable);
+
+  final candidate = await CliLocator(
+    probe: const RealFileProbe(),
+    runnerFactory: makeRunner,
+    knownPaths: knownCliPaths(
+      isWindows: isWindows,
+      isMacOS: Platform.isMacOS,
+      isLinux: Platform.isLinux,
+      home: home,
+      env: env,
+    ),
+    environment: env,
+    executableName: cliExecutableName(isWindows: isWindows),
+  ).locate();
+
+  if (candidate == null) {
+    await appendAutoReapplyLog('cli not found');
+    exit(0);
+  }
+
+  final result = await checkAndReapply(
+    bridge: CliBridge(makeRunner(candidate.path)),
+    spotifyVersion: () => detectSpotifyVersion(
+      isWindows: isWindows,
+      isMacOS: Platform.isMacOS,
+      isLinux: Platform.isLinux,
+      runnerFactory: (executable, args) =>
+          SystemCommandRunner(executable, baseArgs: args),
+      env: env,
+    ),
+  );
+
+  await appendAutoReapplyLog(result.message);
+
+  // The Flutter Windows runner keeps the process alive even though no window
+  // was ever shown, so a scheduled run has to end the process explicitly.
+  exit(0);
 }
 
 class SpicetifyApp extends StatefulWidget {
@@ -94,6 +150,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     super.initState();
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
+    widget.controller.refreshAutoReapply();
   }
 
   @override

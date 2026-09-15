@@ -2,6 +2,17 @@ import 'package:spicetify_ui/core/cli/process_runner.dart';
 
 final _versionPattern = RegExp(r'(\d+\.\d+\.\d+(?:\.\d+)?)');
 
+String _psQuote(String value) => "'${value.replaceAll("'", "''")}'";
+
+/// PowerShell binds nothing to `$args` when `-Command` is given a script and
+/// the value is passed positionally: the argument is appended to the command
+/// text and fails to parse. The path has to be inlined, single-quoted.
+List<String> windowsSpotifyVersionArgs(String executable) => [
+  '-NoProfile',
+  '-Command',
+  '(Get-Item -LiteralPath ${_psQuote(executable)}).VersionInfo.ProductVersion',
+];
+
 Future<String?> detectSpotifyVersion({
   required bool isWindows,
   required bool isMacOS,
@@ -13,13 +24,11 @@ Future<String?> detectSpotifyVersion({
   if (isWindows) {
     final appData = env['APPDATA'];
     if (appData == null || appData.isEmpty) return null;
-    final exe = '$appData\\Spotify\\Spotify.exe';
-    final runner = runnerFactory('powershell', const [
-      '-NoProfile',
-      '-Command',
-      r'(Get-Item -LiteralPath $args[0]).VersionInfo.ProductVersion',
-    ]);
-    final result = await runner.run([exe]);
+    final runner = runnerFactory(
+      'powershell',
+      windowsSpotifyVersionArgs('$appData\\Spotify\\Spotify.exe'),
+    );
+    final result = await runner.run(const []);
     return _firstVersion(result.output);
   }
 

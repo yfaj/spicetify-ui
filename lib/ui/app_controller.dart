@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:spicetify_ui/core/cli/cli_bridge.dart';
 import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/config/config_parser.dart';
 import 'package:spicetify_ui/core/config/reapply.dart' as reapply;
+import 'package:spicetify_ui/core/platform/scheduler.dart';
 
 enum CliStatus { unknown, missing, found }
 
@@ -26,13 +29,17 @@ class AppController extends ChangeNotifier {
     required this._configFileReader,
     this._directoryLister,
     Future<String?> Function()? spotifyVersionDetector,
-  }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null);
+    TaskScheduler? scheduler,
+  }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null),
+       _scheduler =
+           scheduler ?? taskSchedulerFor(isWindows: Platform.isWindows);
 
   final CliLocator _locator;
   final CommandRunner Function(String executable) _runnerFactory;
   final String Function(String path) _configFileReader;
   final List<String> Function(String path)? _directoryLister;
   final Future<String?> Function() _spotifyVersionDetector;
+  final TaskScheduler _scheduler;
 
   CliBridge? _bridge;
 
@@ -49,6 +56,8 @@ class AppController extends ChangeNotifier {
   bool watchRunning = false;
   bool busy = false;
   bool lastCommandFailed = false;
+  bool autoReapplyEnabled = false;
+  String? lastAutoReapply;
   CommandNotice? notice;
 
   static const _adminMarker = 'administrator or root privileges';
@@ -233,6 +242,41 @@ class AppController extends ChangeNotifier {
   void setAdmin(bool value) {
     adminEnabled = value;
     notifyListeners();
+  }
+
+  Future<void> refreshAutoReapply() async {
+    autoReapplyEnabled = await _scheduler.isRegistered();
+    lastAutoReapply = await readLastAutoReapply();
+    notifyListeners();
+  }
+
+  /// Registers or removes the per-user scheduled task. No elevation is
+  /// involved: `schtasks` runs the task as the current user.
+  Future<void> setAutoReapply(bool value) async {
+    busy = true;
+    notifyListeners();
+
+    try {
+      final ok = value
+          ? await _scheduler.register(Platform.resolvedExecutable)
+          : await _scheduler.unregister();
+
+      if (!ok) {
+        notice = CommandNotice(
+          title: value
+              ? 'Could not enable auto re-apply'
+              : 'Could not disable auto re-apply',
+          message:
+              'The scheduled task could not be updated. Windows Task Scheduler '
+              'refused the change.',
+        );
+      }
+
+      autoReapplyEnabled = await _scheduler.isRegistered();
+    } finally {
+      busy = false;
+      notifyListeners();
+    }
   }
 
   void clearLog() {

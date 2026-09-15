@@ -140,6 +140,27 @@ class _Found extends StatelessWidget {
             ),
           ],
         ),
+        ActionGroup(
+          label: 'AUTOMATION',
+          children: [
+            ActionToggle(
+              title: 'Re-apply after Spotify updates',
+              subtitle: 'Checks every 15 minutes and restores the patch',
+              value: controller.autoReapplyEnabled,
+              onChanged: canRun ? controller.setAutoReapply : null,
+            ),
+            if (controller.lastAutoReapply != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 10, bottom: 6),
+                child: Text(
+                  'last: ${controller.lastAutoReapply}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+              ),
+          ],
+        ),
         if (!isLinux)
           ActionGroup(
             label: 'SPOTIFY UPDATES',

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/platform/elevation.dart';
 import 'package:spicetify_ui/core/platform/spotify_version.dart';
@@ -75,6 +78,58 @@ void main() {
         runnerFactory: (_, _) => StubRunner('command not found'),
       );
       expect(version, isNull);
+    });
+  });
+
+  group('windowsSpotifyVersionArgs', () {
+    test(r'inlines the quoted path instead of relying on $args', () {
+      final args = windowsSpotifyVersionArgs(
+        r'C:\Users\me\Spotify\Spotify.exe',
+      );
+
+      expect(args, contains('-NoProfile'));
+      expect(args, contains('-Command'));
+      expect(args.last, isNot(contains(r'$args')));
+      expect(args.last, contains(r"'C:\Users\me\Spotify\Spotify.exe'"));
+    });
+
+    test('escapes apostrophes in the path', () {
+      final args = windowsSpotifyVersionArgs(r"C:\it's here\Spotify.exe");
+
+      expect(args.last, contains(r"'C:\it''s here\Spotify.exe'"));
+    });
+
+    test('runs through PowerShell without a parse error', () async {
+      if (!Platform.isWindows) return;
+
+      final runner = SystemCommandRunner(
+        'powershell',
+        baseArgs: windowsSpotifyVersionArgs(Platform.resolvedExecutable),
+      );
+
+      final result = await runner.run(const []);
+
+      // The original bug appended the path positionally, so PowerShell parsed
+      // it as part of the script and failed with "Unexpected token".
+      expect(result.ok, isTrue, reason: result.output);
+      expect(result.output, isNot(contains('Unexpected token')));
+      expect(result.output, isNot(contains('ParserError')));
+    });
+
+    test('reads a real version from an executable', () async {
+      if (!Platform.isWindows) return;
+
+      final systemRoot = Platform.environment['SystemRoot'] ?? r'C:\Windows';
+      final runner = SystemCommandRunner(
+        'powershell',
+        baseArgs: windowsSpotifyVersionArgs(
+          '$systemRoot\\System32\\notepad.exe',
+        ),
+      );
+
+      final result = await runner.run(const []);
+
+      expect(parseVersion(result.output), isNotEmpty, reason: result.output);
     });
   });
 
