@@ -92,10 +92,20 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _recordFailure(CommandResult result) {
-    if (result.ok) return;
+  /// Names the command that finished, so the log closes each run with a line
+  /// saying what ran rather than only speaking up when something breaks.
+  void _recordOutcome(List<String> args, CommandResult result) {
+    final name = args.isEmpty ? 'spicetify' : args.join(' ');
+
+    if (result.ok) {
+      _appendLog(LogLine('Finished "$name"', LogStream.stdout));
+      return;
+    }
+
     lastCommandFailed = true;
-    _appendLog(LogLine('exit ${result.exitCode}', LogStream.stderr));
+    _appendLog(
+      LogLine('Finished "$name" — exit ${result.exitCode}', LogStream.stderr),
+    );
 
     final output = result.output.trim();
 
@@ -201,7 +211,7 @@ class AppController extends ChangeNotifier {
 
     try {
       final result = await bridge.run(args, onLine: _appendLog);
-      _recordFailure(result);
+      _recordOutcome(args, result);
     } finally {
       runningCommand = null;
       busy = false;
@@ -229,13 +239,16 @@ class AppController extends ChangeNotifier {
           onLine: _appendLog,
         );
         if (!result.ok) {
-          _recordFailure(result);
+          _recordOutcome(buildSetArgs(entry.key, entry.value), result);
           return;
         }
+        _recordOutcome(buildSetArgs(entry.key, entry.value), result);
       }
 
       _staged.clear();
-      _recordFailure(await bridge.run(const ['apply'], onLine: _appendLog));
+      _recordOutcome(const [
+        'apply',
+      ], await bridge.run(const ['apply'], onLine: _appendLog));
     } finally {
       runningCommand = null;
       busy = false;
