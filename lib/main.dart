@@ -273,7 +273,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                 // another.
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(10),
