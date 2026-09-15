@@ -101,6 +101,11 @@ class _Found extends StatelessWidget {
               onTap: canRun ? controller.clearBackup : null,
             ),
             ActionRow(
+              title: 'Enable devtools',
+              subtitle: 'Enable it now · Ctrl+Shift+I inside Spotify',
+              onTap: canRun ? controller.enableDevtools : null,
+            ),
+            ActionRow(
               title: 'Restart',
               subtitle: 'Restart the Spotify client',
               onTap: canRun ? controller.restart : null,
