@@ -5,6 +5,11 @@ import 'package:window_manager/window_manager.dart';
 
 const Size windowSize = Size(640, 560);
 
+/// The app's accent, and a heavily blacked-out version of it for the card
+/// shadows, so they read as part of the theme rather than as generic black.
+const Color accentColour = Color(0xFFF97316);
+const Color cardShadow = Color(0xCC2A1408);
+
 /// Width the log card occupies, including its margin.
 const double logPanelWidth = 228;
 
@@ -38,6 +43,7 @@ Future<void> configureWindow() async {
     size: windowSize,
     center: true,
     title: 'Spicetify UI',
+    backgroundColor: Colors.transparent,
   );
 
   await windowManager.waitUntilReadyToShow(options, () async {

@@ -246,7 +246,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
         brightness: Brightness.dark,
         visualDensity: VisualDensity.compact,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFF97316),
+          seedColor: accentColour,
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF121212),
@@ -274,16 +274,15 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                 // another.
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                    margin: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0xAA000000),
-                          blurRadius: 24,
-                          spreadRadius: 2,
-                          offset: Offset(0, 8),
+                          color: cardShadow,
+                          blurRadius: 14,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
