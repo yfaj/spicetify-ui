@@ -47,11 +47,17 @@ jobs:
       - run: flutter test
       - run: flutter build ${{ matrix.platform }} --release
 
+      - name: Set version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${VERSION//\//-}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
       - name: Package portable build
         shell: bash
         run: |
           mkdir -p dist
-          VERSION="${GITHUB_REF_NAME#v}"
           case "${{ matrix.platform }}" in
             windows)
               cd build/windows/x64/runner/Release
@@ -67,11 +73,33 @@ jobs:
               ;;
           esac
 
+      - name: Build macOS disk image
+        if: matrix.platform == 'macos'
+        run: |
+          hdiutil create -volname "Spicetify UI" -srcfolder build/macos/Build/Products/Release -ov -format UDZO "dist/spicetify-ui-$VERSION-macos-arm64.dmg"
+
+      - name: Build Linux deb package
+        if: matrix.platform == 'linux'
+        run: |
+          PKG="spicetify-ui_${VERSION}_amd64"
+          mkdir -p "build/deb/$PKG/DEBIAN" "build/deb/$PKG/usr/lib/spicetify-ui" "build/deb/$PKG/usr/bin"
+          cp -r build/linux/x64/release/bundle/. "build/deb/$PKG/usr/lib/spicetify-ui/"
+          printf '%s\n' \
+            "Package: spicetify-ui" \
+            "Version: $VERSION" \
+            "Architecture: amd64" \
+            "Maintainer: Spicetify UI contributors" \
+            "Description: Unofficial desktop front-end for the Spicetify CLI" \
+            > "build/deb/$PKG/DEBIAN/control"
+          printf '#!/bin/sh\nexec /usr/lib/spicetify-ui/spicetify_ui "$@"\n' > "build/deb/$PKG/usr/bin/spicetify-ui"
+          chmod +x "build/deb/$PKG/usr/bin/spicetify-ui"
+          dpkg-deb --build "build/deb/$PKG" "dist/spicetify-ui-$VERSION-linux-x64.deb"
+
       - name: Build Windows installer
         if: matrix.platform == 'windows'
         shell: pwsh
         env:
-          APP_VERSION: ${{ github.ref_name }}
+          APP_VERSION: ${{ env.VERSION }}
         run: |
           choco install innosetup -y
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\spicetify-ui.iss
