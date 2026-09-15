@@ -224,10 +224,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     });
   }
 
-  void _setLogOpen(bool open) {
-    setState(() => _logOpen = open);
-    setLogPanelVisible(open);
-  }
+  void _setLogOpen(bool open) => setState(() => _logOpen = open);
 
   DotState _dotState(AppController controller) =>
       switch (controller.cliStatus) {
@@ -257,52 +254,54 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final controller = widget.controller;
 
           return Scaffold(
-            body: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            body: Column(
               children: [
-                // Outside the main window's own chrome: the log has its own
-                // title bar, and the main title bar must not span both.
-                if (_logOpen)
-                  LogPanel(
-                    lines: controller.log,
-                    onClose: () => _setLogOpen(false),
-                    onClear: controller.clearLog,
+                if (usesCustomShell)
+                  Titlebar(
+                    appVersion: appVersion,
+                    cliVersion: controller.cliVersion,
+                    state: _dotState(controller),
                   ),
                 Expanded(
-                  child: Column(
+                  child: Stack(
                     children: [
-                      if (usesCustomShell)
-                        Titlebar(
-                          appVersion: appVersion,
-                          cliVersion: controller.cliVersion,
-                          state: _dotState(controller),
-                        ),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 8),
-                            TabStrip(
-                              index: _tab,
-                              onChanged: (i) => setState(() => _tab = i),
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: switch (_tab) {
-                                0 => SetupScreen(controller: controller),
-                                1 => ConfigScreen(controller: controller),
-                                _ => BackupScreen(controller: controller),
-                              },
-                            ),
-                          ],
-                        ),
+                      Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          TabStrip(
+                            index: _tab,
+                            onChanged: (i) => setState(() => _tab = i),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: switch (_tab) {
+                              0 => SetupScreen(controller: controller),
+                              1 => ConfigScreen(controller: controller),
+                              _ => BackupScreen(controller: controller),
+                            },
+                          ),
+                        ],
                       ),
-                      BottomBar(
-                        controller: controller,
-                        logOpen: _logOpen,
-                        onToggleLog: () => _setLogOpen(!_logOpen),
-                      ),
+                      // Floats over the content rather than taking width from
+                      // it. The window never changes size.
+                      if (_logOpen)
+                        Positioned(
+                          left: 8,
+                          top: 0,
+                          bottom: 8,
+                          child: LogPanel(
+                            lines: controller.log,
+                            onClose: () => _setLogOpen(false),
+                            onClear: controller.clearLog,
+                          ),
+                        ),
                     ],
                   ),
+                ),
+                BottomBar(
+                  controller: controller,
+                  logOpen: _logOpen,
+                  onToggleLog: () => _setLogOpen(!_logOpen),
                 ),
               ],
             ),
