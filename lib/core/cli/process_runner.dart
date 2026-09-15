@@ -44,21 +44,23 @@ class SystemCommandRunner implements CommandRunner {
 
     final lines = <LogLine>[];
 
-    void collect(Stream<List<int>> source, LogStream kind) {
-      source
+    Future<void> collect(Stream<List<int>> source, LogStream kind) {
+      return source
           .transform(utf8.decoder)
           .transform(const LineSplitter())
-          .listen((text) {
+          .forEach((text) {
         final line = LogLine(text, kind);
         lines.add(line);
         onLine?.call(line);
       });
     }
 
-    collect(process.stdout, LogStream.stdout);
-    collect(process.stderr, LogStream.stderr);
+    final stdoutDrain = collect(process.stdout, LogStream.stdout);
+    final stderrDrain = collect(process.stderr, LogStream.stderr);
 
     final code = await process.exitCode;
-    return CommandResult(exitCode: code, lines: lines);
+    await Future.wait([stdoutDrain, stderrDrain]);
+
+    return CommandResult(exitCode: code, lines: List.unmodifiable(lines));
   }
 }

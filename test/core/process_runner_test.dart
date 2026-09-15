@@ -38,5 +38,19 @@ void main() {
 
       expect(seen.any((t) => t.contains('a')), isTrue);
     });
+
+    test('returns a complete, unmodifiable multi-line result', () async {
+      final runner = Platform.isWindows
+          ? SystemCommandRunner('cmd.exe', baseArgs: const ['/c', 'echo a&echo b&echo c'])
+          : SystemCommandRunner('/bin/sh', baseArgs: const ['-c', 'printf "a\\nb\\nc\\n"']);
+
+      final result = await runner.run(const []);
+
+      expect(result.lines.map((l) => l.text), ['a', 'b', 'c']);
+      expect(
+        () => result.lines.add(const LogLine('x', LogStream.stdout)),
+        throwsUnsupportedError,
+      );
+    });
   });
 }
