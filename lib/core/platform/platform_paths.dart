@@ -32,3 +32,34 @@ List<String> knownCliPaths({
 
 String cliExecutableName({required bool isWindows}) =>
     isWindows ? 'spicetify.exe' : 'spicetify';
+
+/// Where the CLI keeps its backup and extracted app files.
+///
+/// Not the userdata directory: `path-utils.go:127-147` puts the state folder
+/// under `%APPDATA%` on Windows but under `XDG_STATE_HOME` (falling back to
+/// `~/.local/state`) on Linux and macOS.
+String stateDirectory({
+  required bool isWindows,
+  required String home,
+  required Map<String, String> env,
+}) {
+  if (isWindows) {
+    final appData = env['APPDATA'];
+    if (appData != null && appData.isNotEmpty) return appData;
+    return '$home\\AppData\\Roaming';
+  }
+
+  final xdg = env['XDG_STATE_HOME'];
+  if (xdg != null && xdg.isNotEmpty) return xdg;
+  return '$home/.local/state';
+}
+
+String backupDirectory({
+  required bool isWindows,
+  required String home,
+  required Map<String, String> env,
+}) {
+  final separator = isWindows ? '\\' : '/';
+  return '${stateDirectory(isWindows: isWindows, home: home, env: env)}'
+      '${separator}spicetify${separator}Backup';
+}

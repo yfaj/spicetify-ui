@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:spicetify_ui/core/backup_status.dart';
 import 'package:spicetify_ui/core/cli/cli_bridge.dart';
 import 'package:spicetify_ui/core/cli/cli_locator.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/config/config_parser.dart';
 import 'package:spicetify_ui/core/config/reapply.dart' as reapply;
 import 'package:spicetify_ui/core/platform/app_state.dart';
+import 'package:spicetify_ui/core/platform/platform_paths.dart';
 import 'package:spicetify_ui/core/platform/scheduler.dart';
 
 enum CliStatus { unknown, missing, found }
@@ -33,11 +35,13 @@ class AppController extends ChangeNotifier {
     TaskScheduler? scheduler,
     bool? Function()? readBlockedState,
     void Function(bool value)? writeBlockedState,
+    List<BackupFile> Function(String directory)? backupFileLister,
   }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null),
        _scheduler =
            scheduler ?? taskSchedulerFor(isWindows: Platform.isWindows),
        _readBlockedState = readBlockedState ?? readUpdatesBlocked,
-       _writeBlockedState = writeBlockedState ?? writeUpdatesBlocked;
+       _writeBlockedState = writeBlockedState ?? writeUpdatesBlocked,
+       _backupFileLister = backupFileLister ?? listBackupFiles;
 
   final CliLocator _locator;
   final CommandRunner Function(String executable) _runnerFactory;
@@ -47,6 +51,7 @@ class AppController extends ChangeNotifier {
   final TaskScheduler _scheduler;
   final bool? Function() _readBlockedState;
   final void Function(bool value) _writeBlockedState;
+  final List<BackupFile> Function(String directory) _backupFileLister;
 
   CliBridge? _bridge;
 
@@ -65,6 +70,7 @@ class AppController extends ChangeNotifier {
   bool lastCommandFailed = false;
   bool? autoReapplyEnabled;
   bool? updatesBlocked;
+  BackupStatus? backupStatus;
   String? runningCommand;
   String? lastAutoReapply;
   CommandNotice? notice;
@@ -265,6 +271,26 @@ class AppController extends ChangeNotifier {
 
   void setAdmin(bool value) {
     adminEnabled = value;
+    notifyListeners();
+  }
+
+  /// Reads the backup directory and the two recorded versions, then decides
+  /// which of the four states the backup is in.
+  Future<void> refreshBackup() async {
+    final env = Platform.environment;
+    final directory = backupDirectory(
+      isWindows: Platform.isWindows,
+      home: env['HOME'] ?? env['USERPROFILE'] ?? '',
+      env: env,
+    );
+
+    backupStatus = evaluateBackup(
+      backupVersion: config?.value('Backup', 'version'),
+      backupWith: config?.value('Backup', 'with'),
+      spotifyVersion: spotifyVersion,
+      cliVersion: cliVersion,
+      files: _backupFileLister(directory),
+    );
     notifyListeners();
   }
 

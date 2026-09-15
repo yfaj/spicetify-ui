@@ -6,7 +6,7 @@ class TabStrip extends StatelessWidget {
   final int index;
   final ValueChanged<int> onChanged;
 
-  static const List<String> labels = ['Setup', 'Config'];
+  static const List<String> labels = ['Setup', 'Config', 'Backup'];
 
   @override
   Widget build(BuildContext context) {

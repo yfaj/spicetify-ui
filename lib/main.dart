@@ -10,6 +10,7 @@ import 'package:spicetify_ui/core/platform/platform_paths.dart';
 import 'package:spicetify_ui/core/platform/scheduler.dart';
 import 'package:spicetify_ui/core/platform/spotify_version.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
+import 'package:spicetify_ui/ui/screens/backup_screen.dart';
 import 'package:spicetify_ui/ui/screens/config_screen.dart';
 import 'package:spicetify_ui/ui/screens/setup_screen.dart';
 import 'package:spicetify_ui/ui/shell/app_window.dart';
@@ -153,6 +154,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
     widget.controller.refreshAutoReapply();
+    widget.controller.refreshBackup();
   }
 
   @override
@@ -257,9 +259,11 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: _tab == 0
-                      ? SetupScreen(controller: controller)
-                      : ConfigScreen(controller: controller),
+                  child: switch (_tab) {
+                    0 => SetupScreen(controller: controller),
+                    1 => ConfigScreen(controller: controller),
+                    _ => BackupScreen(controller: controller),
+                  },
                 ),
                 BottomBar(controller: controller),
               ],
