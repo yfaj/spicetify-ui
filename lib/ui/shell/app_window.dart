@@ -5,6 +5,22 @@ import 'package:window_manager/window_manager.dart';
 
 const Size windowSize = Size(640, 560);
 
+/// Width the log card occupies, including its margin.
+const double logPanelWidth = 228;
+
+/// The window grows so the main card keeps its width when the log opens.
+const Size windowSizeWithLog = Size(640 + logPanelWidth, 560);
+
+/// Resizes the fixed window so the log card sits beside the main card instead
+/// of taking width from it. Min and max are locked to the same value, so they
+/// move with it.
+Future<void> setLogPanelVisible(bool visible) async {
+  final size = visible ? windowSizeWithLog : windowSize;
+  await windowManager.setMinimumSize(size);
+  await windowManager.setMaximumSize(size);
+  await windowManager.setSize(size);
+}
+
 bool get usesCustomShell => Platform.isWindows || Platform.isMacOS;
 
 Future<void> configureWindow() async {
@@ -24,6 +40,10 @@ Future<void> configureWindow() async {
     if (usesCustomShell) {
       await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     }
+    // The native drop shadow draws a rounded slab around the whole window,
+    // which reads as a container holding both cards. The cards carry their
+    // own shadows instead.
+    await windowManager.setHasShadow(false);
     // Leaves the window itself unfilled, so the gap between the two cards
     // shows the desktop rather than a slab of app colour. Only the cards are
     // opaque. On Windows this drives SetWindowCompositionAttribute with a
