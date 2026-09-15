@@ -299,7 +299,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                       BottomBar(
                         controller: controller,
                         logOpen: _logOpen,
-                        onToggleLog: () => setState(() => _logOpen = !_logOpen),
+                        onToggleLog: () => _setLogOpen(!_logOpen),
                       ),
                     ],
                   ),
