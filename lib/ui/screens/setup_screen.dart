@@ -165,15 +165,23 @@ class _Found extends StatelessWidget {
           ActionGroup(
             label: 'SPOTIFY UPDATES',
             children: [
-              ActionRow(
-                title: 'Block updates',
-                subtitle: 'Stop Spotify from updating itself',
-                onTap: canRun ? () => controller.setBlockUpdates(true) : null,
-              ),
-              ActionRow(
-                title: 'Unblock updates',
-                subtitle: 'Let Spotify update again',
-                onTap: canRun ? () => controller.setBlockUpdates(false) : null,
+              ActionChoice(
+                title: 'Spotify updates',
+                subtitle: 'Blocking patches Spotify.exe and cannot be queried',
+                actions: [
+                  OutlinedButton(
+                    onPressed: canRun
+                        ? () => controller.setBlockUpdates(true)
+                        : null,
+                    child: const Text('Block'),
+                  ),
+                  OutlinedButton(
+                    onPressed: canRun
+                        ? () => controller.setBlockUpdates(false)
+                        : null,
+                    child: const Text('Unblock'),
+                  ),
+                ],
               ),
             ],
           ),

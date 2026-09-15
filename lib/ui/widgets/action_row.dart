@@ -108,6 +108,49 @@ class ActionToggle extends StatelessWidget {
   }
 }
 
+/// A row whose action has no readable state, so it offers explicit choices
+/// instead of a toggle that would have to invent its own value.
+class ActionChoice extends StatelessWidget {
+  const ActionChoice({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.actions,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.bodyMedium),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          for (final action in actions) ...[const SizedBox(width: 8), action],
+        ],
+      ),
+    );
+  }
+}
+
 class ActionGroup extends StatelessWidget {
   const ActionGroup({super.key, required this.label, required this.children});
 

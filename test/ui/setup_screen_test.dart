@@ -129,8 +129,9 @@ void main() {
     expect(find.text('Clear backup'), findsOneWidget);
     expect(find.text('Enable devtools'), findsOneWidget);
     expect(find.text('Restart'), findsOneWidget);
-    expect(find.text('Block updates'), findsOneWidget);
-    expect(find.text('Unblock updates'), findsOneWidget);
+    expect(find.text('Spotify updates'), findsOneWidget);
+    expect(find.text('Block'), findsOneWidget);
+    expect(find.text('Unblock'), findsOneWidget);
   });
 
   testWidgets('hides the spotify updates section on Linux', (tester) async {
@@ -149,8 +150,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Block updates'), findsNothing);
-    expect(find.text('Unblock updates'), findsNothing);
+    expect(find.text('Spotify updates'), findsNothing);
     expect(find.text('Backup'), findsOneWidget);
   });
 
@@ -206,9 +206,9 @@ void main() {
       ),
     );
 
-    await tester.ensureVisible(find.text('Unblock updates'));
+    await tester.ensureVisible(find.text('Unblock'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Unblock updates'));
+    await tester.tap(find.text('Unblock'));
     await tester.pumpAndSettle();
 
     expect(
@@ -216,9 +216,9 @@ void main() {
       contains(equals(['spotify-updates', 'unblock'])),
     );
 
-    await tester.ensureVisible(find.text('Block updates'));
+    await tester.ensureVisible(find.text('Block'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Block updates'));
+    await tester.tap(find.text('Block'));
     await tester.pumpAndSettle();
 
     expect(
