@@ -142,6 +142,8 @@ class SpicetifyApp extends StatefulWidget {
 }
 
 class _SpicetifyAppState extends State<SpicetifyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
   int _tab = 0;
   bool _noticeOpen = false;
 
@@ -165,33 +167,50 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
 
     _noticeOpen = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
+      // `showDialog` needs a context below the MaterialApp, because that is
+      // where the Navigator lives. This State's own context sits above it, so
+      // the navigator key is what makes the dialog reachable at all.
+      final navigator = _navigatorKey.currentState;
+      if (!mounted || navigator == null) {
+        _noticeOpen = false;
+        return;
+      }
 
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(notice.title),
-          content: SelectableText(notice.message),
-          actions: [
-            if (notice.offerQuit)
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  windowManager.close();
-                },
-                child: const Text('Quit'),
+      try {
+        await showDialog<void>(
+          context: navigator.context,
+          // Dismissible on purpose. A modal that cannot be dismissed is a trap
+          // if anything about it goes wrong — which is exactly what happened
+          // when this dialog could not find a Navigator at all.
+          barrierDismissible: true,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(notice.title),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 260),
+              child: SingleChildScrollView(
+                child: SelectableText(notice.message),
               ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
             ),
-          ],
-        ),
-      );
-
-      _noticeOpen = false;
-      widget.controller.dismissNotice();
+            actions: [
+              if (notice.offerQuit)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    windowManager.close();
+                  },
+                  child: const Text('Quit'),
+                ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } finally {
+        _noticeOpen = false;
+        widget.controller.dismissNotice();
+      }
     });
   }
 
@@ -206,6 +225,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

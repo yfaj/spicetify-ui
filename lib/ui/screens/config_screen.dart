@@ -54,12 +54,16 @@ class _ConfigScreenState extends State<ConfigScreen> {
         // loaded, rendering them would show a page of toggles all reading
         // "off" — a value we do not actually know.
         if (widget.controller.config == null) {
+          final reason = widget.controller.cliStatus == CliStatus.found
+              ? 'Spicetify is installed, but it did not report a readable '
+                    'config file.'
+              : 'Spicetify is not installed. Set it up on the Setup tab first.';
+
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(
-                'Configuration is not available.\n'
-                'Spicetify has not reported a readable config file.',
+                'Configuration is not available.\n\n$reason',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall,
               ),
