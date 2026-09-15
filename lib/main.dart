@@ -15,14 +15,16 @@ import 'package:spicetify_ui/ui/shell/titlebar.dart';
 import 'package:spicetify_ui/ui/widgets/bottom_bar.dart';
 import 'package:spicetify_ui/ui/widgets/status_dot.dart';
 
-const String appVersion = '0.1.0';
+// Source of truth: the version field in pubspec.yaml.
+const String appVersion = '1.0.0';
 
 AppController buildProductionController() {
   final env = Platform.environment;
   final home = env['HOME'] ?? env['USERPROFILE'] ?? '';
   final isWindows = Platform.isWindows;
 
-  CommandRunner makeRunner(String executable) => SystemCommandRunner(executable);
+  CommandRunner makeRunner(String executable) =>
+      SystemCommandRunner(executable);
 
   return AppController(
     locator: CliLocator(
@@ -91,8 +93,10 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.refresh();
   }
 
-  DotState _dotState(AppController controller) => switch (controller.cliStatus) {
-        CliStatus.found => controller.needsReapply ? DotState.warn : DotState.ok,
+  DotState _dotState(AppController controller) =>
+      switch (controller.cliStatus) {
+        CliStatus.found =>
+          controller.needsReapply ? DotState.warn : DotState.ok,
         CliStatus.missing => DotState.missing,
         CliStatus.unknown => DotState.warn,
       };
@@ -124,7 +128,10 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                     state: _dotState(controller),
                   ),
                 const SizedBox(height: 8),
-                TabStrip(index: _tab, onChanged: (i) => setState(() => _tab = i)),
+                TabStrip(
+                  index: _tab,
+                  onChanged: (i) => setState(() => _tab = i),
+                ),
                 const SizedBox(height: 8),
                 Expanded(
                   child: _tab == 0
