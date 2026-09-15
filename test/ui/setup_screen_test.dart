@@ -185,6 +185,8 @@ void main() {
       ),
     );
 
+    await tester.ensureVisible(find.text('Unblock updates'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Unblock updates'));
     await tester.pumpAndSettle();
 
@@ -193,6 +195,8 @@ void main() {
       contains(equals(['spotify-updates', 'unblock'])),
     );
 
+    await tester.ensureVisible(find.text('Block updates'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Block updates'));
     await tester.pumpAndSettle();
 

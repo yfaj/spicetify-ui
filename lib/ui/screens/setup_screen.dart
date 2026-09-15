@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
+import 'package:spicetify_ui/ui/widgets/action_row.dart';
 
 const List<String> windowsInstallLines = [
   'winget install Spicetify.Spicetify',
@@ -84,36 +85,59 @@ class _Found extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        const SizedBox(height: 4),
+        ActionGroup(
+          label: 'UPDATES',
           children: [
-            OutlinedButton(
-              onPressed: canRun ? controller.backup : null,
-              child: const Text('Backup'),
+            ActionRow(
+              title: 'Check for updates',
+              subtitle: 'Re-detect the Spicetify CLI',
+              onTap: canRun ? controller.refresh : null,
             ),
-            OutlinedButton(
-              onPressed: canRun ? controller.clearBackup : null,
-              child: const Text('Clear backup'),
+            ActionRow(
+              title: 'Upgrade',
+              subtitle: 'Update Spicetify itself',
+              onTap: canRun ? controller.upgrade : null,
             ),
-            OutlinedButton(
-              onPressed: canRun ? controller.enableDevtools : null,
-              child: const Text('Enable devtools'),
+          ],
+        ),
+        ActionGroup(
+          label: 'MAINTENANCE',
+          children: [
+            ActionRow(
+              title: 'Backup',
+              subtitle: 'Store a clean copy of Spotify',
+              onTap: canRun ? controller.backup : null,
             ),
-            OutlinedButton(
-              onPressed: canRun ? controller.restart : null,
-              child: const Text('Restart'),
+            ActionRow(
+              title: 'Clear backup',
+              subtitle: 'Delete the stored backup files',
+              onTap: canRun ? controller.clearBackup : null,
             ),
-            OutlinedButton(
-              onPressed: canRun ? () => controller.setBlockUpdates(true) : null,
-              child: const Text('Block updates'),
+            ActionRow(
+              title: 'Enable devtools',
+              subtitle: 'Ctrl+Shift+I inside Spotify',
+              onTap: canRun ? controller.enableDevtools : null,
             ),
-            OutlinedButton(
-              onPressed: canRun
-                  ? () => controller.setBlockUpdates(false)
-                  : null,
-              child: const Text('Unblock updates'),
+            ActionRow(
+              title: 'Restart',
+              subtitle: 'Restart the Spotify client',
+              onTap: canRun ? controller.restart : null,
+            ),
+          ],
+        ),
+        ActionGroup(
+          label: 'SPOTIFY UPDATES',
+          children: [
+            ActionRow(
+              title: 'Block updates',
+              subtitle: 'Stop Spotify from updating itself',
+              onTap: canRun ? () => controller.setBlockUpdates(true) : null,
+            ),
+            ActionRow(
+              title: 'Unblock updates',
+              subtitle: 'Let Spotify update again',
+              onTap: canRun ? () => controller.setBlockUpdates(false) : null,
             ),
           ],
         ),
