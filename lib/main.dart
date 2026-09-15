@@ -147,7 +147,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   int _tab = 0;
-  bool _logOpen = false;
+  bool _logOpen = true;
   bool _noticeOpen = false;
   bool _lastCommandFailedSeen = false;
 
@@ -157,6 +157,8 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
     widget.controller.refreshAutoReapply();
+    // The log is open by default, so the window has to start at that size.
+    setLogPanelVisible(_logOpen);
   }
 
   @override
@@ -259,7 +261,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final theme = Theme.of(context);
 
           return Scaffold(
-            backgroundColor: Colors.transparent,
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -278,13 +279,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: cardShadow,
-                          blurRadius: 14,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(color: const Color(0xFF3A3A3A)),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(9),

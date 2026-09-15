@@ -60,13 +60,7 @@ class _LogPanelState extends State<LogPanel> {
           decoration: BoxDecoration(
             color: const Color(0xFF141414),
             borderRadius: BorderRadius.circular(10),
-            boxShadow: const [
-              BoxShadow(
-                color: cardShadow,
-                blurRadius: 14,
-                offset: Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFF3A3A3A)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(9),
@@ -115,7 +109,6 @@ class _LogPanelState extends State<LogPanel> {
                     ],
                   ),
                 ),
-                Divider(height: 1, color: divider),
                 Expanded(
                   child: widget.lines.isEmpty
                       ? Center(

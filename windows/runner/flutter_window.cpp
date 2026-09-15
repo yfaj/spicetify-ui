@@ -1,87 +1,8 @@
 #include "flutter_window.h"
 
-#include <dwmapi.h>
-#include <stdio.h>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
-
-namespace {
-
-// DWMWA_BORDER_COLOR is Windows 11 only and not in every SDK's headers.
-constexpr DWORD kDwmwaBorderColor = 34;
-// Asking for no border (0xFFFFFFFE) is not honoured on every build; some fall
-// back to the default light one, which reads as a white frame. Painting it the
-// card colour instead is honoured, and a dark edge on a dark card is
-// invisible.
-constexpr COLORREF kDwmwaColorNone = 0x00141414;
-
-enum AccentState {
-  ACCENT_ENABLE_TRANSPARENTGRADIENT = 2,
-};
-
-struct AccentPolicy {
-  int accent_state;
-  int flags;
-  int gradient_color;
-  int animation_id;
-};
-
-struct WindowCompositionAttributeData {
-  int attribute;
-  void* data;
-  unsigned long data_size;
-};
-
-// Windows 11 draws a one-pixel border around every top-level window, in the
-// compositor rather than in the client area, which shows as an outline around
-// a frameless window. Nothing in the Flutter layer can remove it.
-void RemoveDwmBorder(HWND hwnd) {
-  const COLORREF none = kDwmwaColorNone;
-  DwmSetWindowAttribute(hwnd, kDwmwaBorderColor, &none, sizeof(none));
-}
-
-// Leaves the window unfilled so the desktop shows between the cards.
-//
-// This is the accent policy, and it is the only mechanism that actually makes
-// a Flutter window transparent on Windows: Flutter presents through DirectX,
-// so the GDI-surface colour key (LWA_COLORKEY) has nothing to act on.
-//
-// window_manager can set this too, but it passes flags = 2, which asks the
-// compositor to draw a one-pixel border around the window. That border is the
-// frame that survives every attempt to style it away, so the accent is set
-// here with flags = 0 instead. It runs before the window is shown: applying it
-// afterwards lets the compositor draw its own chrome over the top.
-void MakeWindowTransparent(HWND hwnd) {
-  const HINSTANCE user32 = LoadLibraryW(L"user32.dll");
-  if (user32 == nullptr) {
-    return;
-  }
-
-  using SetWindowCompositionAttributeFn =
-      BOOL(WINAPI*)(HWND, WindowCompositionAttributeData*);
-  const auto set_composition =
-      reinterpret_cast<SetWindowCompositionAttributeFn>(
-          GetProcAddress(user32, "SetWindowCompositionAttribute"));
-
-  if (set_composition != nullptr) {
-    AccentPolicy policy = {};
-    policy.accent_state = ACCENT_ENABLE_TRANSPARENTGRADIENT;
-    policy.flags = 0;
-    policy.gradient_color = 0;
-
-    WindowCompositionAttributeData data = {};
-    data.attribute = 19;  // WCA_ACCENT_POLICY
-    data.data = &policy;
-    data.data_size = sizeof(policy);
-
-    set_composition(hwnd, &data);
-  }
-
-  FreeLibrary(user32);
-}
-
-}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -106,16 +27,8 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  // The accent is applied first: it sets the window border colour as a side
-  // effect, so the border has to be painted after it or the accent wins.
-  MakeWindowTransparent(GetHandle());
-  RemoveDwmBorder(GetHandle());
-
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
-    // Re-asserted after the window is visible: the compositor applies its own
-    // border colour when the window appears, overriding what was set earlier.
-    RemoveDwmBorder(GetHandle());
   });
 
   // Flutter can complete the first frame before the "show window" callback is
