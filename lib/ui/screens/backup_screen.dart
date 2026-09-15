@@ -54,7 +54,10 @@ class BackupScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _StatusCard(status: status),
+              ActionGroup(
+                label: 'BACKUP',
+                children: [_StatusCard(status: status)],
+              ),
               ActionGroup(
                 label: 'ACTIONS',
                 children: [
