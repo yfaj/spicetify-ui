@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
+// The window is made transparent natively, in windows/runner/flutter_window.cpp.
+// Doing it through window_manager passes a flags value that asks the compositor
+// to draw a one-pixel border around the window, which cannot be styled away.
 const Size windowSize = Size(640, 560);
 
 /// The app's accent, and a heavily blacked-out version of it for the card
@@ -43,7 +46,6 @@ Future<void> configureWindow() async {
     size: windowSize,
     center: true,
     title: 'Spicetify UI',
-    backgroundColor: Colors.transparent,
   );
 
   await windowManager.waitUntilReadyToShow(options, () async {
@@ -58,11 +60,6 @@ Future<void> configureWindow() async {
     // which reads as a container holding both cards. The cards carry their
     // own shadows instead.
     await windowManager.setHasShadow(false);
-    // Leaves the window itself unfilled, so the gap between the two cards
-    // shows the desktop rather than a slab of app colour. Only the cards are
-    // opaque. On Windows this drives SetWindowCompositionAttribute with a
-    // fully transparent accent.
-    await windowManager.setBackgroundColor(Colors.transparent);
     await windowManager.show();
     await windowManager.focus();
   });
