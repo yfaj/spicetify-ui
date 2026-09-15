@@ -7,6 +7,18 @@ import 'package:spicetify_ui/core/config/reapply.dart' as reapply;
 
 enum CliStatus { unknown, missing, found }
 
+class CommandNotice {
+  const CommandNotice({
+    required this.title,
+    required this.message,
+    this.offerQuit = false,
+  });
+
+  final String title;
+  final String message;
+  final bool offerQuit;
+}
+
 class AppController extends ChangeNotifier {
   AppController({
     required this._locator,
@@ -37,6 +49,14 @@ class AppController extends ChangeNotifier {
   bool watchRunning = false;
   bool busy = false;
   bool lastCommandFailed = false;
+  CommandNotice? notice;
+
+  static const _adminMarker = 'administrator or root privileges';
+
+  void dismissNotice() {
+    notice = null;
+    notifyListeners();
+  }
 
   final List<LogLine> log = [];
   final Map<String, String> _staged = {};
@@ -52,6 +72,26 @@ class AppController extends ChangeNotifier {
     if (result.ok) return;
     lastCommandFailed = true;
     _appendLog(LogLine('exit ${result.exitCode}', LogStream.stderr));
+
+    final output = result.output.trim();
+
+    if (output.contains(_adminMarker)) {
+      notice = const CommandNotice(
+        title: 'Administrator privileges',
+        message:
+            'Spicetify refuses to run with administrator or root privileges. '
+            'Close this app and open it normally, without "Run as administrator".',
+        offerQuit: true,
+      );
+      return;
+    }
+
+    notice = CommandNotice(
+      title: 'Command failed',
+      message: output.isEmpty
+          ? 'The command exited with code ${result.exitCode}. See the log for details.'
+          : output,
+    );
   }
 
   Future<void> refresh() async {

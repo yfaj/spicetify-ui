@@ -14,6 +14,7 @@ import 'package:spicetify_ui/ui/shell/tabs.dart';
 import 'package:spicetify_ui/ui/shell/titlebar.dart';
 import 'package:spicetify_ui/ui/widgets/bottom_bar.dart';
 import 'package:spicetify_ui/ui/widgets/status_dot.dart';
+import 'package:window_manager/window_manager.dart';
 
 // Source of truth: the version field in pubspec.yaml.
 const String appVersion = '1.0.0';
@@ -86,11 +87,55 @@ class SpicetifyApp extends StatefulWidget {
 
 class _SpicetifyAppState extends State<SpicetifyApp> {
   int _tab = 0;
+  bool _noticeOpen = false;
 
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    final notice = widget.controller.notice;
+    if (notice == null || _noticeOpen) return;
+
+    _noticeOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(notice.title),
+          content: SelectableText(notice.message),
+          actions: [
+            if (notice.offerQuit)
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  windowManager.close();
+                },
+                child: const Text('Quit'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+
+      _noticeOpen = false;
+      widget.controller.dismissNotice();
+    });
   }
 
   DotState _dotState(AppController controller) =>

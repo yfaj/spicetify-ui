@@ -36,8 +36,9 @@ class ScriptedRunner implements CommandRunner {
 }
 
 class ThrowingRunner implements CommandRunner {
-  ThrowingRunner({this.throwOn = const {}});
+  ThrowingRunner({this.throwOn = const {}, this.failWith});
   final Set<String> throwOn;
+  final String? failWith;
 
   @override
   Future<CommandResult> run(
@@ -47,6 +48,13 @@ class ThrowingRunner implements CommandRunner {
     if (throwOn.contains(args.join(' '))) {
       throw StateError('runner failure');
     }
+
+    if (failWith != null && args.join(' ') != '--version') {
+      final line = LogLine(failWith!, LogStream.stderr);
+      onLine?.call(line);
+      return CommandResult(exitCode: 1, lines: [line]);
+    }
+
     final line = LogLine(
       args.join(' ') == '--version' ? '2.45.0' : r'C:\cfg\config-xpui.ini',
       LogStream.stdout,
@@ -224,6 +232,63 @@ void main() {
   test('admin starts disabled', () {
     final controller = buildController(ScriptedRunner(const {}));
     expect(controller.adminEnabled, isFalse);
+  });
+
+  test('an administrator-privilege failure raises a quit notice', () async {
+    final controller = buildController(
+      ThrowingRunner(
+        throwOn: const {},
+        failWith:
+            'Spicetify should NOT be run with administrator or root privileges',
+      ),
+    );
+    await controller.refresh();
+
+    await controller.restore();
+
+    expect(controller.notice, isNotNull);
+    expect(controller.notice!.offerQuit, isTrue);
+    expect(controller.notice!.title, 'Administrator privileges');
+  });
+
+  test('an ordinary failure raises a notice without the quit action', () async {
+    final controller = buildController(
+      ThrowingRunner(throwOn: const {}, failWith: 'Theme "Nope" not found'),
+    );
+    await controller.refresh();
+
+    await controller.restore();
+
+    expect(controller.notice, isNotNull);
+    expect(controller.notice!.offerQuit, isFalse);
+    expect(controller.notice!.message, contains('Theme "Nope" not found'));
+  });
+
+  test('a successful command raises no notice', () async {
+    final controller = buildController(
+      ScriptedRunner(const {
+        '--version': '2.45.0',
+        '-c': r'C:\cfg\config-xpui.ini',
+        'restore': 'ok',
+      }),
+    );
+    await controller.refresh();
+
+    await controller.restore();
+
+    expect(controller.notice, isNull);
+  });
+
+  test('dismissing clears the notice', () async {
+    final controller = buildController(
+      ThrowingRunner(throwOn: const {}, failWith: 'boom'),
+    );
+    await controller.refresh();
+    await controller.restore();
+
+    controller.dismissNotice();
+
+    expect(controller.notice, isNull);
   });
 
   test('a throwing command clears busy and still propagates', () async {
