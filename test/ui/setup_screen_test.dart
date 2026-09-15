@@ -133,6 +133,27 @@ void main() {
     expect(find.text('Unblock updates'), findsOneWidget);
   });
 
+  testWidgets('hides the spotify updates section on Linux', (tester) async {
+    final controller = buildController(found: true);
+    await controller.refresh();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SetupScreen(
+            controller: controller,
+            isWindows: false,
+            isLinux: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Block updates'), findsNothing);
+    expect(find.text('Unblock updates'), findsNothing);
+    expect(find.text('Backup'), findsOneWidget);
+  });
+
   testWidgets('does not repeat the CLI version the titlebar already shows', (
     tester,
   ) async {

@@ -19,14 +19,21 @@ List<String> installLinesFor({required bool isWindows}) =>
     isWindows ? windowsInstallLines : unixInstallLines;
 
 class SetupScreen extends StatelessWidget {
-  const SetupScreen({super.key, required this.controller, this.isWindows});
+  const SetupScreen({
+    super.key,
+    required this.controller,
+    this.isWindows,
+    this.isLinux,
+  });
 
   final AppController controller;
   final bool? isWindows;
+  final bool? isLinux;
 
   @override
   Widget build(BuildContext context) {
     final windows = isWindows ?? Platform.isWindows;
+    final linux = isLinux ?? Platform.isLinux;
 
     return ListenableBuilder(
       listenable: controller,
@@ -39,7 +46,7 @@ class SetupScreen extends StatelessWidget {
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           child: status == CliStatus.found
-              ? _Found(controller: controller)
+              ? _Found(controller: controller, isLinux: linux)
               : _Missing(controller: controller, isWindows: windows),
         );
       },
@@ -48,9 +55,19 @@ class SetupScreen extends StatelessWidget {
 }
 
 class _Found extends StatelessWidget {
-  const _Found({required this.controller});
+  const _Found({required this.controller, required this.isLinux});
 
   final AppController controller;
+  final bool isLinux;
+
+  bool get _alwaysDevtools {
+    final staged = controller.stagedValue('always_enable_devtools');
+    final raw =
+        staged ??
+        controller.config?.value('Setting', 'always_enable_devtools') ??
+        '0';
+    return raw == '1';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +122,17 @@ class _Found extends StatelessWidget {
               subtitle: 'Enable it now · Ctrl+Shift+I inside Spotify',
               onTap: canRun ? controller.enableDevtools : null,
             ),
+            ActionToggle(
+              title: 'Always enable devtools',
+              subtitle: 'Keep DevTools available on every launch',
+              value: _alwaysDevtools,
+              onChanged: canRun
+                  ? (value) => controller.stage(
+                      'always_enable_devtools',
+                      value ? '1' : '0',
+                    )
+                  : null,
+            ),
             ActionRow(
               title: 'Restart',
               subtitle: 'Restart the Spotify client',
@@ -112,21 +140,22 @@ class _Found extends StatelessWidget {
             ),
           ],
         ),
-        ActionGroup(
-          label: 'SPOTIFY UPDATES',
-          children: [
-            ActionRow(
-              title: 'Block updates',
-              subtitle: 'Stop Spotify from updating itself',
-              onTap: canRun ? () => controller.setBlockUpdates(true) : null,
-            ),
-            ActionRow(
-              title: 'Unblock updates',
-              subtitle: 'Let Spotify update again',
-              onTap: canRun ? () => controller.setBlockUpdates(false) : null,
-            ),
-          ],
-        ),
+        if (!isLinux)
+          ActionGroup(
+            label: 'SPOTIFY UPDATES',
+            children: [
+              ActionRow(
+                title: 'Block updates',
+                subtitle: 'Stop Spotify from updating itself',
+                onTap: canRun ? () => controller.setBlockUpdates(true) : null,
+              ),
+              ActionRow(
+                title: 'Unblock updates',
+                subtitle: 'Let Spotify update again',
+                onTap: canRun ? () => controller.setBlockUpdates(false) : null,
+              ),
+            ],
+          ),
       ],
     );
   }

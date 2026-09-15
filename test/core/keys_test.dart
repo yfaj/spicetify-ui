@@ -36,7 +36,6 @@ void main() {
         'replace_colors',
         'overwrite_assets',
         'spotify_launch_flags',
-        'always_enable_devtools',
         'check_spicetify_update',
       ]),
     );

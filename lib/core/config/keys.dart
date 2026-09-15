@@ -135,13 +135,6 @@ const List<ConfigKey> configKeys = [
   ),
   ConfigKey(
     section: 'Setting',
-    key: 'always_enable_devtools',
-    label: 'Always enable devtools',
-    group: 'Features',
-    kind: FieldKind.toggle,
-  ),
-  ConfigKey(
-    section: 'Setting',
     key: 'check_spicetify_update',
     label: 'Check for updates',
     group: 'Features',
