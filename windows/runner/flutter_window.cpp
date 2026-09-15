@@ -104,11 +104,13 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  RemoveDwmBorder(GetHandle());
-  MakeWindowTransparent(GetHandle());
-
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
+    // After the window is visible. Setting these before it is shown lets the
+    // compositor re-apply its own border when the window appears.
+    const HWND hwnd = GetHandle();
+    RemoveDwmBorder(hwnd);
+    MakeWindowTransparent(hwnd);
   });
 
   // Flutter can complete the first frame before the "show window" callback is
