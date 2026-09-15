@@ -224,6 +224,11 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     });
   }
 
+  void _setLogOpen(bool open) {
+    setState(() => _logOpen = open);
+    setLogPanelVisible(open);
+  }
+
   DotState _dotState(AppController controller) =>
       switch (controller.cliStatus) {
         CliStatus.found =>
@@ -260,7 +265,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                 if (_logOpen)
                   LogPanel(
                     lines: controller.log,
-                    onClose: () => setState(() => _logOpen = false),
+                    onClose: () => _setLogOpen(false),
                     onClear: controller.clearLog,
                   ),
                 Expanded(
