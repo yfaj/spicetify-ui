@@ -286,9 +286,8 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                       // it. The window never changes size.
                       if (_logOpen)
                         Positioned(
-                          left: 8,
-                          top: 0,
-                          bottom: 8,
+                          left: 16,
+                          top: 60,
                           child: LogPanel(
                             lines: controller.log,
                             onClose: () => _setLogOpen(false),

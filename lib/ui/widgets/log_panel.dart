@@ -2,22 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 
-/// A log view that reads as a second floating window docked to the left of
-/// the content, rather than a drawer inside it. It carries its own title bar
-/// so it does not look like a pane of the window beside it.
+/// A log view that floats above the content as its own small window: a fixed
+/// card, elevated, with a title bar you can drag it around by.
 class LogPanel extends StatefulWidget {
   const LogPanel({
     super.key,
     required this.lines,
     required this.onClose,
     required this.onClear,
-    this.width = 250,
+    this.width = 330,
+    this.height = 300,
   });
 
   final List<LogLine> lines;
   final VoidCallback onClose;
   final VoidCallback onClear;
   final double width;
+  final double height;
 
   @override
   State<LogPanel> createState() => _LogPanelState();
@@ -52,33 +53,34 @@ class _LogPanelState extends State<LogPanel> {
     final theme = Theme.of(context);
     final divider = theme.dividerColor.withValues(alpha: 0.5);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 0, 8),
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
       child: Container(
-        width: widget.width,
         decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
-          borderRadius: BorderRadius.circular(8),
+          color: const Color(0xFF141414),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: divider),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x66000000),
-              blurRadius: 12,
-              spreadRadius: 1,
+              color: Color(0xAA000000),
+              blurRadius: 24,
+              spreadRadius: 2,
+              offset: Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(9),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               SizedBox(
-                height: 44,
+                height: 38,
                 child: Row(
                   children: [
                     const SizedBox(width: 12),
-                    Icon(Icons.subject, size: 15, color: theme.hintColor),
+                    Icon(Icons.subject, size: 14, color: theme.hintColor),
                     const SizedBox(width: 8),
                     Text('Log', style: theme.textTheme.bodyMedium),
                     const SizedBox(width: 8),
@@ -170,7 +172,7 @@ class _PanelButton extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onTap,
-        child: SizedBox(width: 40, height: 44, child: Icon(icon, size: 15)),
+        child: SizedBox(width: 34, height: 38, child: Icon(icon, size: 14)),
       ),
     );
   }
