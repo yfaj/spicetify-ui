@@ -8,7 +8,9 @@ void main() {
     test('captures stdout and a zero exit code', () async {
       final runner = SystemCommandRunner(
         Platform.isWindows ? 'cmd.exe' : 'echo',
-        baseArgs: Platform.isWindows ? const ['/c', 'echo hello'] : const ['hello'],
+        baseArgs: Platform.isWindows
+            ? const ['/c', 'echo hello']
+            : const ['hello'],
       );
 
       final result = await runner.run(const []);
@@ -19,7 +21,10 @@ void main() {
 
     test('captures a non-zero exit code', () async {
       if (!Platform.isWindows) return;
-      final runner = SystemCommandRunner('cmd.exe', baseArgs: const ['/c', 'exit 3']);
+      final runner = SystemCommandRunner(
+        'cmd.exe',
+        baseArgs: const ['/c', 'exit 3'],
+      );
 
       final result = await runner.run(const []);
 
@@ -41,8 +46,14 @@ void main() {
 
     test('returns a complete, unmodifiable multi-line result', () async {
       final runner = Platform.isWindows
-          ? SystemCommandRunner('cmd.exe', baseArgs: const ['/c', 'echo a&echo b&echo c'])
-          : SystemCommandRunner('/bin/sh', baseArgs: const ['-c', 'printf "a\\nb\\nc\\n"']);
+          ? SystemCommandRunner(
+              'cmd.exe',
+              baseArgs: const ['/c', 'echo a&echo b&echo c'],
+            )
+          : SystemCommandRunner(
+              '/bin/sh',
+              baseArgs: const ['-c', 'printf "a\\nb\\nc\\n"'],
+            );
 
       final result = await runner.run(const []);
 

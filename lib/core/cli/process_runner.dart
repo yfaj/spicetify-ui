@@ -25,7 +25,10 @@ class CommandResult {
 }
 
 abstract interface class CommandRunner {
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine});
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  });
 }
 
 class SystemCommandRunner implements CommandRunner {
@@ -35,12 +38,14 @@ class SystemCommandRunner implements CommandRunner {
   final List<String> baseArgs;
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
-    final process = await Process.start(
-      executable,
-      [...baseArgs, ...args],
-      runInShell: false,
-    );
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
+    final process = await Process.start(executable, [
+      ...baseArgs,
+      ...args,
+    ], runInShell: false);
 
     final lines = <LogLine>[];
 
@@ -49,10 +54,10 @@ class SystemCommandRunner implements CommandRunner {
           .transform(utf8.decoder)
           .transform(const LineSplitter())
           .forEach((text) {
-        final line = LogLine(text, kind);
-        lines.add(line);
-        onLine?.call(line);
-      });
+            final line = LogLine(text, kind);
+            lines.add(line);
+            onLine?.call(line);
+          });
     }
 
     final stdoutDrain = collect(process.stdout, LogStream.stdout);

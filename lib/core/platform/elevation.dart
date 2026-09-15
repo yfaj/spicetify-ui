@@ -16,18 +16,17 @@ List<String> elevateArgs({
   if (isWindows) {
     return [
       'Start-Process',
-      '-FilePath', executable,
+      '-FilePath',
+      executable,
       if (args.isNotEmpty) ...['-ArgumentList', args.join(' ')],
-      '-Verb', 'RunAs',
+      '-Verb',
+      'RunAs',
     ];
   }
 
   if (isMacOS) {
     final command = [executable, ...args].map(_quote).join(' ');
-    return [
-      '-e',
-      'do shell script "$command" with administrator privileges',
-    ];
+    return ['-e', 'do shell script "$command" with administrator privileges'];
   }
 
   if (isLinux) {

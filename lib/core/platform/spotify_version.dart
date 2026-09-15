@@ -6,7 +6,8 @@ Future<String?> detectSpotifyVersion({
   required bool isWindows,
   required bool isMacOS,
   required bool isLinux,
-  required CommandRunner Function(String executable, List<String> args) runnerFactory,
+  required CommandRunner Function(String executable, List<String> args)
+  runnerFactory,
   required Map<String, String> env,
 }) async {
   if (isWindows) {

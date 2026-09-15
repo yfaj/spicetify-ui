@@ -27,9 +27,14 @@ class TabStrip extends StatelessWidget {
                 onTap: () => onChanged(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
-                    color: i == index ? theme.colorScheme.surface : Colors.transparent,
+                    color: i == index
+                        ? theme.colorScheme.surface
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Text(labels[i], style: theme.textTheme.bodyMedium),

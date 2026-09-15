@@ -16,7 +16,9 @@ class LogDrawer extends StatelessWidget {
       width: double.infinity,
       color: const Color(0xFF0A0A0A),
       child: lines.isEmpty
-          ? Center(child: Text('no output yet', style: theme.textTheme.bodySmall))
+          ? Center(
+              child: Text('no output yet', style: theme.textTheme.bodySmall),
+            )
           : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               itemCount: lines.length,

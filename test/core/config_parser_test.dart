@@ -28,13 +28,17 @@ void main() {
     });
 
     test('accepts the CLI spelling of AdditionalOptions', () {
-      final config = ConfigParser.parse('[AdditionalFeatures]\nhome_config = 1\n');
+      final config = ConfigParser.parse(
+        '[AdditionalFeatures]\nhome_config = 1\n',
+      );
 
       expect(config.value('AdditionalOptions', 'home_config'), '1');
     });
 
     test('skips comments and blank lines', () {
-      final config = ConfigParser.parse('; note\n\n[Setting]\n; inner\na = b\n');
+      final config = ConfigParser.parse(
+        '; note\n\n[Setting]\n; inner\na = b\n',
+      );
 
       expect(config.entries.length, 1);
       expect(config.value('Setting', 'a'), 'b');
@@ -47,7 +51,9 @@ void main() {
     });
 
     test('keeps values containing equals signs', () {
-      final config = ConfigParser.parse('[Setting]\nspotify_launch_flags = --a=1|--b=2\n');
+      final config = ConfigParser.parse(
+        '[Setting]\nspotify_launch_flags = --a=1|--b=2\n',
+      );
 
       expect(config.value('Setting', 'spotify_launch_flags'), '--a=1|--b=2');
     });

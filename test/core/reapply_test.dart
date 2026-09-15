@@ -15,25 +15,40 @@ void main() {
   group('needsReapply', () {
     test('is false when versions match', () {
       expect(
-        needsReapply(backupVersion: '1.3.0.277.g5441bb3e', spotifyVersion: '1.3.0.277'),
+        needsReapply(
+          backupVersion: '1.3.0.277.g5441bb3e',
+          spotifyVersion: '1.3.0.277',
+        ),
         isFalse,
       );
     });
 
     test('is true when versions differ', () {
       expect(
-        needsReapply(backupVersion: '1.3.0.200.gabc', spotifyVersion: '1.3.0.277'),
+        needsReapply(
+          backupVersion: '1.3.0.200.gabc',
+          spotifyVersion: '1.3.0.277',
+        ),
         isTrue,
       );
     });
 
     test('is false when either side is unknown', () {
-      expect(needsReapply(backupVersion: null, spotifyVersion: '1.3.0.277'), isFalse);
-      expect(needsReapply(backupVersion: '1.3.0.277', spotifyVersion: null), isFalse);
+      expect(
+        needsReapply(backupVersion: null, spotifyVersion: '1.3.0.277'),
+        isFalse,
+      );
+      expect(
+        needsReapply(backupVersion: '1.3.0.277', spotifyVersion: null),
+        isFalse,
+      );
     });
 
     test('is false for an empty backup version', () {
-      expect(needsReapply(backupVersion: '', spotifyVersion: '1.3.0.277'), isFalse);
+      expect(
+        needsReapply(backupVersion: '', spotifyVersion: '1.3.0.277'),
+        isFalse,
+      );
     });
   });
 }
