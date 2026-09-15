@@ -261,6 +261,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                   LogPanel(
                     lines: controller.log,
                     onClose: () => setState(() => _logOpen = false),
+                    onClear: controller.clearLog,
                   ),
                 Expanded(
                   child: Column(

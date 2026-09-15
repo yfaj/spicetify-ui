@@ -140,7 +140,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: LogPanel(lines: const [], onClose: () {}),
+          body: LogPanel(lines: const [], onClose: () {}, onClear: () {}),
         ),
       ),
     );
@@ -158,6 +158,7 @@ void main() {
               LogLine('boom', LogStream.stderr),
             ],
             onClose: () {},
+            onClear: () {},
           ),
         ),
       ),
@@ -173,7 +174,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: LogPanel(lines: const [], onClose: () => closed++),
+          body: LogPanel(
+            lines: const [],
+            onClose: () => closed++,
+            onClear: () {},
+          ),
         ),
       ),
     );
@@ -182,5 +187,55 @@ void main() {
     await tester.pump();
 
     expect(closed, 1);
+  });
+  testWidgets('the log panel clears when asked', (tester) async {
+    var cleared = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LogPanel(
+            lines: const [LogLine('applied', LogStream.stdout)],
+            onClose: () {},
+            onClear: () => cleared++,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pump();
+
+    expect(cleared, 1);
+  });
+
+  testWidgets('copy and clear only appear once there is output', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LogPanel(lines: const [], onClose: () {}, onClear: () {}),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.copy_all_outlined), findsNothing);
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+  });
+
+  testWidgets('copy is offered once there is output', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LogPanel(
+            lines: const [LogLine('applied', LogStream.stdout)],
+            onClose: () {},
+            onClear: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.copy_all_outlined), findsOneWidget);
   });
 }

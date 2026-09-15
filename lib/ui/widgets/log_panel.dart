@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 
 /// A log view that reads as a second floating window docked to the left of
@@ -9,11 +10,13 @@ class LogPanel extends StatefulWidget {
     super.key,
     required this.lines,
     required this.onClose,
+    required this.onClear,
     this.width = 250,
   });
 
   final List<LogLine> lines;
   final VoidCallback onClose;
+  final VoidCallback onClear;
   final double width;
 
   @override
@@ -86,6 +89,24 @@ class _LogPanelState extends State<LogPanel> {
                       ),
                     ),
                     const Spacer(),
+                    if (widget.lines.isNotEmpty)
+                      _PanelButton(
+                        icon: Icons.copy_all_outlined,
+                        tooltip: 'Copy all',
+                        onTap: () => Clipboard.setData(
+                          ClipboardData(
+                            text: widget.lines
+                                .map((line) => line.text)
+                                .join('\n'),
+                          ),
+                        ),
+                      ),
+                    if (widget.lines.isNotEmpty)
+                      _PanelButton(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Clear log',
+                        onTap: widget.onClear,
+                      ),
                     _PanelButton(
                       icon: Icons.close,
                       tooltip: 'Hide log',
@@ -103,23 +124,25 @@ class _LogPanelState extends State<LogPanel> {
                           style: theme.textTheme.bodySmall,
                         ),
                       )
-                    : ListView.builder(
-                        controller: _scroll,
-                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                        itemCount: widget.lines.length,
-                        itemBuilder: (context, index) {
-                          final line = widget.lines[index];
-                          return Text(
-                            line.text,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontFamily: 'monospace',
-                              fontSize: 10.5,
-                              color: line.stream == LogStream.stderr
-                                  ? const Color(0xFFEF4444)
-                                  : null,
-                            ),
-                          );
-                        },
+                    : SelectionArea(
+                        child: ListView.builder(
+                          controller: _scroll,
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                          itemCount: widget.lines.length,
+                          itemBuilder: (context, index) {
+                            final line = widget.lines[index];
+                            return Text(
+                              line.text,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontFamily: 'monospace',
+                                fontSize: 10.5,
+                                color: line.stream == LogStream.stderr
+                                    ? const Color(0xFFEF4444)
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
                       ),
               ),
             ],
