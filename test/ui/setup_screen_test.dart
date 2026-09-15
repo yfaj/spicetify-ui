@@ -150,8 +150,6 @@ void main() {
       ),
     );
 
-    expect(find.text('Backup'), findsOneWidget);
-    expect(find.text('Clear backup'), findsOneWidget);
     expect(find.text('Enable devtools'), findsOneWidget);
     expect(find.text('Restart'), findsOneWidget);
     expect(find.text('Spotify updates'), findsOneWidget);
@@ -176,7 +174,6 @@ void main() {
     );
 
     expect(find.text('Spotify updates'), findsNothing);
-    expect(find.text('Backup'), findsOneWidget);
   });
 
   testWidgets('offers block and unblock buttons while the state is unknown', (
@@ -372,17 +369,17 @@ void main() {
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
 
-    unawaited(controller.backup());
+    unawaited(controller.restart());
     await tester.pump();
 
-    expect(controller.isRunning(const ['backup']), isTrue);
-    expect(controller.isRunning(const ['restart']), isFalse);
+    expect(controller.isRunning(const ['restart']), isTrue);
+    expect(controller.isRunning(const ['upgrade']), isFalse);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     runner.completer.complete(const CommandResult(exitCode: 0, lines: []));
     await tester.pumpAndSettle();
 
-    expect(controller.isRunning(const ['backup']), isFalse);
+    expect(controller.isRunning(const ['restart']), isFalse);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 

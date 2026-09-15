@@ -109,18 +109,6 @@ class _Found extends StatelessWidget {
           label: 'MAINTENANCE',
           children: [
             ActionRow(
-              title: 'Backup',
-              subtitle: 'Store a clean copy of Spotify',
-              onTap: canRun ? controller.backup : null,
-              busy: controller.isRunning(const ['backup']),
-            ),
-            ActionRow(
-              title: 'Clear backup',
-              subtitle: 'Delete the stored backup files',
-              onTap: canRun ? controller.clearBackup : null,
-              busy: controller.isRunning(const ['clear']),
-            ),
-            ActionRow(
               title: 'Enable devtools',
               subtitle: 'Enable it now · Ctrl+Shift+I inside Spotify',
               onTap: canRun ? controller.enableDevtools : null,
