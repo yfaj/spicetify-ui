@@ -28,8 +28,8 @@ class CliBridge {
     this.runner, {
     String Function(String path)? configFileReader,
     List<String> Function(String path)? directoryLister,
-  })  : _configFileReader = configFileReader ?? _readFileOrEmpty,
-        _directoryLister = directoryLister ?? _listDirectories;
+  }) : _configFileReader = configFileReader ?? _readFileOrEmpty,
+       _directoryLister = directoryLister ?? _listDirectories;
 
   final CommandRunner runner;
   final String Function(String path) _configFileReader;
@@ -52,8 +52,12 @@ class CliBridge {
     return names;
   }
 
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) =>
-      runner.run(args, onLine: onLine);
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) => runner.run(args, onLine: onLine);
+
+  Future<CommandResult> runBare() => runner.run(const []);
 
   Future<String?> version() async {
     final result = await runner.run(const ['--version']);
@@ -65,14 +69,21 @@ class CliBridge {
   Future<String?> configFilePath() async {
     final result = await runner.run(const ['-c']);
     if (!result.ok) return null;
-    final value = result.output.trim();
-    return value.isEmpty ? null : value;
+    return _stdoutPath(result);
   }
 
   Future<String?> userdataPath() async {
     final result = await runner.run(const ['path', 'userdata']);
     if (!result.ok) return null;
-    final value = result.output.trim();
+    return _stdoutPath(result);
+  }
+
+  static String? _stdoutPath(CommandResult result) {
+    final value = result.lines
+        .where((line) => line.stream == LogStream.stdout)
+        .map((line) => line.text)
+        .join('\n')
+        .trim();
     return value.isEmpty ? null : value;
   }
 
@@ -91,12 +102,15 @@ class CliBridge {
   Future<CommandResult> restore() => runner.run(const ['restore']);
   Future<CommandResult> backup() => runner.run(const ['backup']);
   Future<CommandResult> clearBackup() => runner.run(const ['clear']);
-  Future<CommandResult> enableDevtools() => runner.run(const ['enable-devtools']);
+  Future<CommandResult> enableDevtools() =>
+      runner.run(const ['enable-devtools']);
   Future<CommandResult> restart() => runner.run(const ['restart']);
   Future<CommandResult> refresh() => runner.run(const ['refresh']);
   Future<CommandResult> upgrade() => runner.run(const ['upgrade']);
-  Future<CommandResult> blockUpdates() => runner.run(const ['spotify-updates', 'block']);
-  Future<CommandResult> unblockUpdates() => runner.run(const ['spotify-updates', 'unblock']);
+  Future<CommandResult> blockUpdates() =>
+      runner.run(const ['spotify-updates', 'block']);
+  Future<CommandResult> unblockUpdates() =>
+      runner.run(const ['spotify-updates', 'unblock']);
 
   Future<List<String>> listThemes() async {
     final userdata = await userdataPath();

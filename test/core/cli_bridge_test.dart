@@ -8,12 +8,33 @@ class RecordingRunner implements CommandRunner {
   final List<List<String>> calls = [];
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     calls.add(args);
     return CommandResult(
       exitCode: 0,
-      lines: response.isEmpty ? const [] : [LogLine(response, LogStream.stdout)],
+      lines: response.isEmpty
+          ? const []
+          : [LogLine(response, LogStream.stdout)],
     );
+  }
+}
+
+class StreamRunner implements CommandRunner {
+  StreamRunner(this.lines);
+  final List<LogLine> lines;
+
+  @override
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
+    for (final line in lines) {
+      onLine?.call(line);
+    }
+    return CommandResult(exitCode: 0, lines: lines);
   }
 }
 
@@ -26,12 +47,22 @@ void main() {
     test('inserts -- before spotify_launch_flags values', () {
       expect(
         buildSetArgs('spotify_launch_flags', '--remote-debugging-port=9222'),
-        ['config', 'spotify_launch_flags', '--', '--remote-debugging-port=9222'],
+        [
+          'config',
+          'spotify_launch_flags',
+          '--',
+          '--remote-debugging-port=9222',
+        ],
       );
     });
 
     test('inserts -- even for an empty launch flags value', () {
-      expect(buildSetArgs('spotify_launch_flags', ''), ['config', 'spotify_launch_flags', '--', '']);
+      expect(buildSetArgs('spotify_launch_flags', ''), [
+        'config',
+        'spotify_launch_flags',
+        '--',
+        '',
+      ]);
     });
   });
 
@@ -64,6 +95,26 @@ void main() {
       final bridge = CliBridge(runner, configFileReader: (_) => 'x');
 
       expect(await bridge.readConfig(), isNull);
+    });
+
+    test('ignores stderr when reading the config path', () async {
+      final runner = StreamRunner(const [
+        LogLine('warning: deprecated config', LogStream.stderr),
+        LogLine(r'C:\cfg\config-xpui.ini', LogStream.stdout),
+      ]);
+      final bridge = CliBridge(runner);
+
+      expect(await bridge.configFilePath(), r'C:\cfg\config-xpui.ini');
+    });
+
+    test('ignores stderr when reading the userdata path', () async {
+      final runner = StreamRunner(const [
+        LogLine('warning: deprecated config', LogStream.stderr),
+        LogLine(r'C:\cfg\userdata', LogStream.stdout),
+      ]);
+      final bridge = CliBridge(runner);
+
+      expect(await bridge.userdataPath(), r'C:\cfg\userdata');
     });
 
     test('sets a value through the CLI', () async {
@@ -108,7 +159,8 @@ void main() {
       final runner = RecordingRunner(r'/tmp/userdata');
       final bridge = CliBridge(
         runner,
-        directoryLister: (path) => path.endsWith('Themes') ? ['Sleek', 'Bloom'] : const [],
+        directoryLister: (path) =>
+            path.endsWith('Themes') ? ['Sleek', 'Bloom'] : const [],
       );
 
       expect(await bridge.listThemes(), ['Sleek', 'Bloom']);

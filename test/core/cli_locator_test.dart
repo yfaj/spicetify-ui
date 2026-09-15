@@ -19,11 +19,24 @@ class FakeRunner implements CommandRunner {
   final int exitCode;
 
   @override
-  Future<CommandResult> run(List<String> args, {void Function(LogLine line)? onLine}) async {
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
     return CommandResult(
       exitCode: exitCode,
       lines: [LogLine(version, LogStream.stdout)],
     );
+  }
+}
+
+class ThrowingRunner implements CommandRunner {
+  @override
+  Future<CommandResult> run(
+    List<String> args, {
+    void Function(LogLine line)? onLine,
+  }) async {
+    throw ProcessException('spicetify', args, 'not executable');
   }
 }
 
@@ -113,6 +126,23 @@ void main() {
       expect(await locator.locateAll(), isEmpty);
     });
 
+    test('skips a throwing candidate and keeps scanning', () async {
+      final locator = CliLocator(
+        probe: FakeProbe({r'C:\bad\spicetify.exe', r'C:\good\spicetify.exe'}),
+        runnerFactory: (executable) => executable.contains('bad')
+            ? ThrowingRunner()
+            : FakeRunner('2.45.0'),
+        knownPaths: const [r'C:\bad\spicetify.exe', r'C:\good\spicetify.exe'],
+        environment: const {'PATH': ''},
+      );
+
+      final candidates = await locator.locateAll();
+
+      expect(candidates, hasLength(1));
+      expect(candidates.single.path, r'C:\good\spicetify.exe');
+      expect(candidates.single.version, '2.45.0');
+    });
+
     test('does not report the same path twice', () async {
       final locator = CliLocator(
         probe: FakeProbe({r'C:\bin\spicetify.exe'}),
@@ -129,18 +159,26 @@ void main() {
   group('knownCliPaths', () {
     test('lists Windows locations', () {
       final paths = knownCliPaths(
-        isWindows: true, isMacOS: false, isLinux: false,
+        isWindows: true,
+        isMacOS: false,
+        isLinux: false,
         home: r'C:\Users\me',
         env: const {'LOCALAPPDATA': r'C:\Users\me\AppData\Local'},
       );
-      expect(paths, contains(r'C:\Users\me\AppData\Local\spicetify\spicetify.exe'));
+      expect(
+        paths,
+        contains(r'C:\Users\me\AppData\Local\spicetify\spicetify.exe'),
+      );
       expect(paths, contains(r'C:\Users\me\.spicetify\spicetify.exe'));
     });
 
     test('lists Linux locations', () {
       final paths = knownCliPaths(
-        isWindows: false, isMacOS: false, isLinux: true,
-        home: '/home/me', env: const {},
+        isWindows: false,
+        isMacOS: false,
+        isLinux: true,
+        home: '/home/me',
+        env: const {},
       );
       expect(paths, contains('/home/me/.spicetify/spicetify'));
       expect(paths, contains('/usr/local/bin/spicetify'));
@@ -150,8 +188,11 @@ void main() {
 
     test('lists macOS locations', () {
       final paths = knownCliPaths(
-        isWindows: false, isMacOS: true, isLinux: false,
-        home: '/Users/me', env: const {},
+        isWindows: false,
+        isMacOS: true,
+        isLinux: false,
+        home: '/Users/me',
+        env: const {},
       );
       expect(paths, contains('/opt/homebrew/bin/spicetify'));
       expect(paths, contains('/usr/local/bin/spicetify'));

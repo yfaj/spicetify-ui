@@ -5,7 +5,11 @@ import 'package:spicetify_ui/core/cli/process_runner.dart';
 enum CliSource { override, path, knownLocation }
 
 class CliCandidate {
-  const CliCandidate({required this.path, required this.source, required this.version});
+  const CliCandidate({
+    required this.path,
+    required this.source,
+    required this.version,
+  });
 
   final String path;
   final CliSource source;
@@ -22,7 +26,8 @@ class RealFileProbe implements FileProbe {
   @override
   bool exists(String path) {
     final type = FileSystemEntity.typeSync(path);
-    return type == FileSystemEntityType.file || type == FileSystemEntityType.link;
+    return type == FileSystemEntityType.file ||
+        type == FileSystemEntityType.link;
   }
 }
 
@@ -54,13 +59,21 @@ class CliLocator {
     final raw = environment['PATH'] ?? environment['Path'] ?? '';
     if (raw.isEmpty) return const [];
     final separator = Platform.isWindows ? ';' : ':';
-    return raw.split(separator).where((entry) => entry.trim().isNotEmpty).toList();
+    return raw
+        .split(separator)
+        .where((entry) => entry.trim().isNotEmpty)
+        .toList();
   }
 
   Future<CliCandidate?> _probe(String path, CliSource source) async {
     if (!probe.exists(path)) return null;
 
-    final result = await runnerFactory(path).run(const ['--version']);
+    final CommandResult result;
+    try {
+      result = await runnerFactory(path).run(const ['--version']);
+    } catch (_) {
+      return null;
+    }
     if (!result.ok) return null;
 
     final version = parseVersion(result.output);
