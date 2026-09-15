@@ -107,6 +107,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
+        visualDensity: VisualDensity.compact,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFF97316),
           brightness: Brightness.dark,

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
-const Size windowSize = Size(640, 720);
+const Size windowSize = Size(640, 560);
 
 bool get usesCustomShell => Platform.isWindows || Platform.isMacOS;
 

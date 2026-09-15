@@ -69,7 +69,7 @@ class _Found extends StatelessWidget {
             onPressed: canRun ? controller.runBare : null,
             child: const Text('Run Spicetify'),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
         ],
         Wrap(
           spacing: 8,
@@ -84,7 +84,7 @@ class _Found extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 14),
         Wrap(
           spacing: 8,
           runSpacing: 8,
