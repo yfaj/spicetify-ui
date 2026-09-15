@@ -1,6 +1,7 @@
 #include "flutter_window.h"
 
 #include <dwmapi.h>
+#include <stdio.h>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -38,10 +39,6 @@ struct WindowCompositionAttributeData {
 void RemoveDwmBorder(HWND hwnd) {
   const COLORREF none = kDwmwaColorNone;
   DwmSetWindowAttribute(hwnd, kDwmwaBorderColor, &none, sizeof(none));
-
-  const BOOL dark = TRUE;
-  DwmSetWindowAttribute(hwnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark,
-                        sizeof(dark));
 }
 
 // Leaves the window unfilled so the desktop shows between the cards.
@@ -109,12 +106,16 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
-  // Both before the window is shown.
-  RemoveDwmBorder(GetHandle());
+  // The accent is applied first: it sets the window border colour as a side
+  // effect, so the border has to be painted after it or the accent wins.
   MakeWindowTransparent(GetHandle());
+  RemoveDwmBorder(GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
+    // Re-asserted after the window is visible: the compositor applies its own
+    // border colour when the window appears, overriding what was set earlier.
+    RemoveDwmBorder(GetHandle());
   });
 
   // Flutter can complete the first frame before the "show window" callback is
