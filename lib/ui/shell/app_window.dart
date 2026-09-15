@@ -24,6 +24,11 @@ Future<void> configureWindow() async {
     if (usesCustomShell) {
       await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     }
+    // Leaves the window itself unfilled, so the gap between the two cards
+    // shows the desktop rather than a slab of app colour. Only the cards are
+    // opaque. On Windows this drives SetWindowCompositionAttribute with a
+    // fully transparent accent.
+    await windowManager.setBackgroundColor(Colors.transparent);
     await windowManager.show();
     await windowManager.focus();
   });

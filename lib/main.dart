@@ -257,6 +257,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final cardBorder = theme.dividerColor.withValues(alpha: 0.5);
 
           return Scaffold(
+            backgroundColor: Colors.transparent,
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
