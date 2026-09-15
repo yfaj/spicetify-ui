@@ -1,0 +1,31 @@
+Spicetify UI
+============
+
+This application is an unofficial front-end for the Spicetify CLI.
+
+Spicetify CLI
+-------------
+This application does NOT bundle, redistribute, fork, or recompile the
+Spicetify CLI. The CLI is a separate, user-installed dependency that this
+application invokes as an external process.
+
+  Project:   https://github.com/spicetify/cli
+  License:   GNU Lesser General Public License v2.1 (LGPL-2.1)
+  Copyright: the Spicetify contributors
+
+Because no Spicetify code or binary is distributed with this application,
+no LGPL obligation attaches to this application's artifacts. This notice
+exists to credit the upstream project.
+
+Trademarks
+----------
+This project is not affiliated with, endorsed by, or sponsored by Spicetify
+or Spotify AB. No Spicetify logo or wordmark is used. "Spotify" is a
+trademark of Spotify AB.
+
+Third-party components
+----------------------
+Flutter and the Dart SDK are used under the BSD 3-Clause License.
+window_manager is used under the MIT License.
+cupertino_icons is used under the MIT License.
+The path package is used under the BSD 3-Clause License.
