@@ -59,7 +59,6 @@ class _LogPanelState extends State<LogPanel> {
           decoration: BoxDecoration(
             color: const Color(0xFF141414),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: divider),
             boxShadow: const [
               BoxShadow(
                 color: Color(0xAA000000),

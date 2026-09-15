@@ -257,7 +257,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final controller = widget.controller;
 
           final theme = Theme.of(context);
-          final cardBorder = theme.dividerColor.withValues(alpha: 0.5);
 
           return Scaffold(
             backgroundColor: Colors.transparent,
@@ -279,7 +278,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: cardBorder),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0xAA000000),

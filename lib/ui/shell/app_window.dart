@@ -14,11 +14,19 @@ const Size windowSizeWithLog = Size(640 + logPanelWidth, 560);
 /// Resizes the fixed window so the log card sits beside the main card instead
 /// of taking width from it. Min and max are locked to the same value, so they
 /// move with it.
+///
+/// The window grows to the left, so the main card stays exactly where it was
+/// on screen instead of being pushed sideways.
 Future<void> setLogPanelVisible(bool visible) async {
   final size = visible ? windowSizeWithLog : windowSize;
+  final bounds = await windowManager.getBounds();
+  final added = size.width - bounds.width;
+
   await windowManager.setMinimumSize(size);
   await windowManager.setMaximumSize(size);
-  await windowManager.setSize(size);
+  await windowManager.setBounds(
+    Rect.fromLTWH(bounds.left - added, bounds.top, size.width, size.height),
+  );
 }
 
 bool get usesCustomShell => Platform.isWindows || Platform.isMacOS;
