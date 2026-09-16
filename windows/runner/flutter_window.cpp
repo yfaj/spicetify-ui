@@ -28,7 +28,11 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    // The scheduled auto re-apply run passes --check. It has no UI, so showing
+    // the window would pop it over whatever the user is doing every interval.
+    if (wcsstr(GetCommandLineW(), L"--check") == nullptr) {
+      this->Show();
+    }
   });
 
   // Flutter can complete the first frame before the "show window" callback is
