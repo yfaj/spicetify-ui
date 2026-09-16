@@ -1,8 +1,13 @@
 #include "flutter_window.h"
 
+#include <dwmapi.h>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+
+namespace {
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
