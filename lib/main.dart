@@ -278,11 +278,11 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                     margin: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFF3A3A3A)),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(9),
+                      borderRadius: BorderRadius.circular(15),
                       child: Column(
                         children: [
                           if (usesCustomShell)

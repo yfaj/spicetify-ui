@@ -57,11 +57,11 @@ class _LogPanelState extends State<LogPanel> {
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF141414),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFF3A3A3A)),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(9),
+            borderRadius: BorderRadius.circular(15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
