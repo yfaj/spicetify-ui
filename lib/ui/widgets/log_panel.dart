@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
-import 'package:spicetify_ui/ui/shell/app_window.dart';
 
 /// A log view that floats above the content as its own small window: a fixed
 /// card, elevated, with a title bar you can drag it around by.
@@ -50,7 +49,6 @@ class _LogPanelState extends State<LogPanel> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final divider = theme.dividerColor.withValues(alpha: 0.5);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 10, 0, 10),

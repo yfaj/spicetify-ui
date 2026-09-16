@@ -94,7 +94,7 @@ void main() {
 
     final resizable = source.indexOf('setResizable(false)');
     final maximizable = source.indexOf('setMaximizable(false)');
-    final maximumSize = source.indexOf('setMaximumSize(windowSize)');
+    final maximumSize = source.indexOf('setMaximumSize(windowSizeWithLog)');
 
     expect(resizable, isNot(-1));
     expect(maximizable, isNot(-1));

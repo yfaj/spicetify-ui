@@ -29,7 +29,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Matches windowSize in lib/ui/shell/app_window.dart. The template default is
   // 1280x720, and resizing from Dart afterwards leaves the window briefly wrong
   // and depends on the window manager succeeding.
-  Win32Window::Size size(640, 560);
+  // The log is open by default, so the window starts at that size.
+  Win32Window::Size size(868, 560);
   if (!window.Create(L"spicetify_ui", origin, size)) {
     return EXIT_FAILURE;
   }

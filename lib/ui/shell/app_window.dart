@@ -37,7 +37,7 @@ Future<void> configureWindow() async {
   await windowManager.ensureInitialized();
 
   const options = WindowOptions(
-    size: windowSize,
+    size: windowSizeWithLog,
     center: true,
     title: 'Spicetify UI',
   );
@@ -45,8 +45,8 @@ Future<void> configureWindow() async {
   await windowManager.waitUntilReadyToShow(options, () async {
     await windowManager.setResizable(false);
     await windowManager.setMaximizable(false);
-    await windowManager.setMinimumSize(windowSize);
-    await windowManager.setMaximumSize(windowSize);
+    await windowManager.setMinimumSize(windowSizeWithLog);
+    await windowManager.setMaximumSize(windowSizeWithLog);
     if (usesCustomShell) {
       await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
     }
