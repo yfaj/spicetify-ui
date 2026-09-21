@@ -145,7 +145,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SetupScreen(controller: controller, isWindows: true),
+          body: SetupScreen(
+            controller: controller,
+            isWindows: true,
+            isLinux: false,
+          ),
         ),
       ),
     );
@@ -186,7 +190,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SetupScreen(controller: controller, isWindows: true),
+          body: SetupScreen(
+            controller: controller,
+            isWindows: true,
+            isLinux: false,
+          ),
         ),
       ),
     );
@@ -205,7 +213,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SetupScreen(controller: controller, isWindows: true),
+          body: SetupScreen(
+            controller: controller,
+            isWindows: true,
+            isLinux: false,
+          ),
         ),
       ),
     );
@@ -271,7 +283,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: SetupScreen(controller: fixture.controller, isWindows: true),
+          body: SetupScreen(
+            controller: fixture.controller,
+            isWindows: true,
+            isLinux: false,
+          ),
         ),
       ),
     );
