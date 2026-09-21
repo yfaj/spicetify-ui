@@ -86,6 +86,11 @@ class AppController extends ChangeNotifier {
 
   final List<LogLine> log = [];
 
+  /// Index in [log] where the currently running task's output begins.
+  /// Everything before it is the previous task's history, which the UI fades
+  /// once a new task starts. Null when no task is running.
+  int? historyBoundary;
+
   /// Maximum lines kept in memory. Older lines are dropped from the front.
   static const int logCapacity = 2000;
 
@@ -228,6 +233,7 @@ class AppController extends ChangeNotifier {
     busy = true;
     lastCommandFailed = false;
     runningCommand = args.join(' ');
+    historyBoundary = log.length;
     notifyListeners();
 
     try {
@@ -236,6 +242,7 @@ class AppController extends ChangeNotifier {
     } finally {
       runningCommand = null;
       busy = false;
+      historyBoundary = null;
       notifyListeners();
     }
   }
@@ -251,6 +258,7 @@ class AppController extends ChangeNotifier {
     busy = true;
     lastCommandFailed = false;
     runningCommand = 'apply';
+    historyBoundary = log.length;
     notifyListeners();
 
     try {
@@ -273,6 +281,7 @@ class AppController extends ChangeNotifier {
     } finally {
       runningCommand = null;
       busy = false;
+      historyBoundary = null;
       notifyListeners();
     }
 

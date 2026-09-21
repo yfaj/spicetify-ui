@@ -52,14 +52,8 @@ AppController buildController({required bool found}) {
   );
 }
 
-Widget bar(AppController controller, {bool logOpen = false}) => MaterialApp(
-  home: Scaffold(
-    body: BottomBar(
-      controller: controller,
-      logOpen: logOpen,
-      onToggleLog: () {},
-    ),
-  ),
+Widget bar(AppController controller) => MaterialApp(
+  home: Scaffold(body: BottomBar(controller: controller)),
 );
 
 void main() {
@@ -104,43 +98,11 @@ void main() {
     expect(apply.onPressed, isNotNull);
   });
 
-  testWidgets('the toggle reports taps', (tester) async {
-    var toggled = 0;
-    final controller = buildController(found: true);
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: BottomBar(
-            controller: controller,
-            logOpen: false,
-            onToggleLog: () => toggled++,
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.byIcon(Icons.chevron_right));
-    await tester.pump();
-
-    expect(toggled, 1);
-  });
-
-  testWidgets('the toggle points the way the panel will open', (tester) async {
-    final controller = buildController(found: true);
-
-    await tester.pumpWidget(bar(controller, logOpen: true));
-    expect(find.byIcon(Icons.chevron_left), findsOneWidget);
-
-    await tester.pumpWidget(bar(controller));
-    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
-  });
-
   testWidgets('the log panel shows an empty state', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: LogPanel(lines: const [], onClose: () {}, onClear: () {}),
+          body: LogPanel(lines: const [], onClear: () {}, busy: false),
         ),
       ),
     );
@@ -157,7 +119,7 @@ void main() {
               LogLine('applied', LogStream.stdout),
               LogLine('boom', LogStream.stderr),
             ],
-            onClose: () {},
+            busy: false,
             onClear: () {},
           ),
         ),
@@ -169,25 +131,6 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
-  testWidgets('the log panel closes when asked', (tester) async {
-    var closed = 0;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: LogPanel(
-            lines: const [],
-            onClose: () => closed++,
-            onClear: () {},
-          ),
-        ),
-      ),
-    );
-
-    await tester.tap(find.byIcon(Icons.close));
-    await tester.pump();
-
-    expect(closed, 1);
-  });
   testWidgets('the log panel clears when asked', (tester) async {
     var cleared = 0;
     await tester.pumpWidget(
@@ -195,7 +138,7 @@ void main() {
         home: Scaffold(
           body: LogPanel(
             lines: const [LogLine('applied', LogStream.stdout)],
-            onClose: () {},
+            busy: false,
             onClear: () => cleared++,
           ),
         ),
@@ -214,7 +157,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: LogPanel(lines: const [], onClose: () {}, onClear: () {}),
+          body: LogPanel(lines: const [], onClear: () {}, busy: false),
         ),
       ),
     );
@@ -229,7 +172,7 @@ void main() {
         home: Scaffold(
           body: LogPanel(
             lines: const [LogLine('applied', LogStream.stdout)],
-            onClose: () {},
+            busy: false,
             onClear: () {},
           ),
         ),

@@ -25,7 +25,8 @@ const double logPanelWidth = 228;
 const Size windowSizeWithLog = Size(640 + logPanelWidth, 560);
 
 /// Grows the window to the left when the log opens, and shrinks it back when
-/// the log closes. Both directions, so the size always returns to [windowSize].
+/// the log closes. One instant resize; the content cross-fades so there is
+/// no sliding to mismatch against the jump.
 Future<void> setLogPanelVisible(bool visible) async {
   final size = visible ? windowSizeWithLog : windowSize;
   final bounds = await windowManager.getBounds();

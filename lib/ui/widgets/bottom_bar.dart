@@ -2,16 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:spicetify_ui/ui/app_controller.dart';
 
 class BottomBar extends StatelessWidget {
-  const BottomBar({
-    super.key,
-    required this.controller,
-    required this.logOpen,
-    required this.onToggleLog,
-  });
+  const BottomBar({super.key, required this.controller});
 
   final AppController controller;
-  final bool logOpen;
-  final VoidCallback onToggleLog;
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +25,6 @@ class BottomBar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: Icon(
-                  logOpen ? Icons.chevron_left : Icons.chevron_right,
-                  size: 18,
-                ),
-                onPressed: onToggleLog,
-                tooltip: logOpen ? 'Hide log' : 'Show log',
-              ),
               const Spacer(),
               FilledButton(
                 onPressed: canRun ? controller.applyChanges : null,

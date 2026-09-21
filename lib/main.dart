@@ -162,9 +162,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   int _tab = 0;
-  bool _logOpen = true;
   bool _noticeOpen = false;
-  bool _lastCommandFailedSeen = false;
 
   @override
   void initState() {
@@ -172,8 +170,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
     widget.controller.refreshAutoReapply();
-    // The log is open by default, so the window has to start at that size.
-    setLogPanelVisible(_logOpen);
   }
 
   @override
@@ -183,11 +179,8 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
   }
 
   void _onControllerChanged() {
-    final failed = widget.controller.lastCommandFailed;
-    if (failed && !_lastCommandFailedSeen && !_logOpen) {
-      setState(() => _logOpen = true);
-    }
-    _lastCommandFailedSeen = failed;
+    // The log is always visible, so failure auto-opening is moot; the notice
+    // system below is what speaks up when a command fails.
 
     final notice = widget.controller.notice;
     if (notice == null || _noticeOpen) return;
@@ -241,10 +234,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     });
   }
 
-  void _setLogOpen(bool open) {
-    setState(() => _logOpen = open);
-    setLogPanelVisible(open);
-  }
 
   DotState _dotState(AppController controller) =>
       switch (controller.cliStatus) {
@@ -280,12 +269,14 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (_logOpen)
-                  LogPanel(
-                    lines: controller.log,
-                    onClose: () => _setLogOpen(false),
-                    onClear: controller.clearLog,
-                  ),
+                // The log is a permanent fixture: it never hides, so the
+                // window never resizes and output is always on screen.
+                LogPanel(
+                  lines: controller.log,
+                  onClear: controller.clearLog,
+                  busy: controller.busy,
+                  historyBoundary: controller.historyBoundary,
+                ),
                 // The main window is its own card, so the pair reads as two
                 // windows side by side rather than one window containing
                 // another.
@@ -326,11 +317,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                               ],
                             ),
                           ),
-                          BottomBar(
-                            controller: controller,
-                            logOpen: _logOpen,
-                            onToggleLog: () => _setLogOpen(!_logOpen),
-                          ),
+                          BottomBar(controller: controller),
                         ],
                       ),
                     ),
