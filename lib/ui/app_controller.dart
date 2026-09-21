@@ -37,8 +37,11 @@ class AppController extends ChangeNotifier {
     void Function(bool value)? writeBlockedState,
     List<BackupFile> Function(String directory)? backupFileLister,
   }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null),
-       _scheduler =
-           scheduler ?? taskSchedulerFor(isWindows: Platform.isWindows),
+       _scheduler =    scheduler ??
+           taskSchedulerFor(
+             isWindows: Platform.isWindows,
+             isLinux: Platform.isLinux,
+           ),
        _readBlockedState = readBlockedState ?? readUpdatesBlocked,
        _writeBlockedState = writeBlockedState ?? writeUpdatesBlocked,
        _backupFileLister = backupFileLister ?? listBackupFiles;

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 
 final _versionPattern = RegExp(r'(\d+\.\d+\.\d+(?:\.\d+)?)');
@@ -43,9 +45,16 @@ Future<String?> detectSpotifyVersion({
   }
 
   if (isLinux) {
-    final runner = runnerFactory('spotify', const ['--version']);
-    final result = await runner.run(const []);
-    return _firstVersion(result.output);
+    // Distro packaging varies wildly: apt puts `spotify` on PATH, snaps and
+    // flatpaks do not. A missing binary is a normal "version unknown", not
+    // an error worth alarming the user about in the log.
+    try {
+      final runner = runnerFactory('spotify', const ['--version']);
+      final result = await runner.run(const []);
+      return _firstVersion(result.output);
+    } on ProcessException {
+      return null;
+    }
   }
 
   return null;

@@ -141,7 +141,9 @@ class _Found extends StatelessWidget {
             children: [
               ActionToggle(
                 title: 'Re-apply after Spotify updates',
-                subtitle: 'Checks every 15 minutes and restores the patch',
+                subtitle: Platform.isLinux
+                    ? 'Checks every 15 minutes via a systemd user timer'
+                    : 'Checks every 15 minutes and restores the patch',
                 value: controller.autoReapplyEnabled!,
                 onChanged: canRun ? controller.setAutoReapply : null,
               ),

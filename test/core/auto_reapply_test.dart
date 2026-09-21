@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:spicetify_ui/core/auto_reapply.dart';
 import 'package:spicetify_ui/core/cli/cli_bridge.dart';
 import 'package:spicetify_ui/core/cli/process_runner.dart';
 import 'package:spicetify_ui/core/platform/scheduler.dart';
+
 import 'package:test/test.dart';
 
 class RecordingRunner implements CommandRunner {
@@ -162,6 +165,112 @@ void main() {
 
       expect(await present.isRegistered(), isTrue);
       expect(await absent.isRegistered(), isFalse);
+    });
+  });
+
+  group('SystemdTaskScheduler', () {
+    test('writes user units that run the check flag and enables the timer',
+        () async {
+      final runner = RecordingRunner(const {
+        '--user daemon-reload': 'ok',
+        '--user enable --now ${SystemdTaskScheduler.unitName}.timer': 'ok',
+      });
+      final home = Directory.systemTemp.createTempSync('spui-test-');
+      addTearDown(() => home.deleteSync(recursive: true));
+
+      final scheduler = SystemdTaskScheduler(
+        runnerFactory: (_) => runner,
+        home: home.path,
+      );
+
+      final ok = await scheduler.register('/usr/bin/spicetify_ui');
+
+      expect(ok, isTrue);
+      final service = File(
+        '${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.service',
+      );
+      final timer = File(
+        '${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.timer',
+      );
+      expect(service.existsSync(), isTrue);
+      expect(timer.existsSync(), isTrue);
+      expect(service.readAsStringSync(), contains('--check'));
+      expect(service.readAsStringSync(), isNot(contains('sudo')));
+      expect(
+        timer.readAsStringSync(),
+        contains('${autoReapplyIntervalMinutes}min'),
+      );
+      expect(
+        runner.calls,
+        contains(equals(['--user', 'daemon-reload'])),
+      );
+      expect(
+        runner.calls,
+        contains(equals(['--user', 'enable', '--now', '${SystemdTaskScheduler.unitName}.timer'])),
+      );
+    });
+
+    test('unregisters by disabling the timer and removing the units', () async {
+      final runner = RecordingRunner(const {
+        '--user daemon-reload': 'ok',
+        '--user enable --now ${SystemdTaskScheduler.unitName}.timer': 'ok',
+        '--user disable --now ${SystemdTaskScheduler.unitName}.timer': 'ok',
+      });
+      final home = Directory.systemTemp.createTempSync('spui-test-');
+      addTearDown(() => home.deleteSync(recursive: true));
+
+      final scheduler = SystemdTaskScheduler(
+        runnerFactory: (_) => runner,
+        home: home.path,
+      );
+      await scheduler.register('/usr/bin/spicetify_ui');
+
+      final ok = await scheduler.unregister();
+
+      expect(ok, isTrue);
+      expect(
+        File('${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.service')
+            .existsSync(),
+        isFalse,
+      );
+      expect(
+        File('${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.timer').existsSync(),
+        isFalse,
+      );
+      expect(
+        runner.calls,
+        contains(equals(['--user', 'disable', '--now', '${SystemdTaskScheduler.unitName}.timer'])),
+      );
+    });
+
+    test('reports registration from systemctl is-enabled', () async {
+      final enabled = SystemdTaskScheduler(
+        runnerFactory: (_) => RecordingRunner(const {
+          '--user is-enabled ${SystemdTaskScheduler.unitName}.timer': 'enabled',
+        }),
+        home: '/nonexistent-home-for-test',
+      );
+      final absent = SystemdTaskScheduler(
+        runnerFactory: (_) => RecordingRunner(const {}),
+        home: '/nonexistent-home-for-test',
+      );
+
+      expect(await enabled.isRegistered(), isTrue);
+      expect(await absent.isRegistered(), isFalse);
+    });
+
+    test('reports itself as supported where systemd runs', () {
+      final scheduler = SystemdTaskScheduler(
+        runnerFactory: (_) => RecordingRunner(const {}),
+        home: '/nonexistent-home-for-test',
+      );
+
+      // On a Windows dev machine this is false; the real assertion is that
+      // it flips true only when the systemd runtime directory exists.
+      expect(
+        scheduler.isSupported,
+        Directory('/run/systemd/system').existsSync(),
+      );
     });
   });
 
