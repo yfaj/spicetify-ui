@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:spicetify_ui/core/auto_reapply.dart';
 import 'package:spicetify_ui/core/cli/cli_bridge.dart';
@@ -21,8 +22,18 @@ import 'package:spicetify_ui/ui/widgets/log_panel.dart';
 import 'package:spicetify_ui/ui/widgets/status_dot.dart';
 import 'package:window_manager/window_manager.dart';
 
-// Source of truth: the version field in pubspec.yaml.
-const String appVersion = '1.0.0';
+/// Fallback only. The source of truth is the `version` field in pubspec.yaml,
+/// read at startup through package_info_plus.
+const String fallbackAppVersion = '1.0.0';
+
+Future<String> loadAppVersion() async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    return info.version.isEmpty ? fallbackAppVersion : info.version;
+  } on Object {
+    return fallbackAppVersion;
+  }
+}
 
 AppController buildProductionController() {
   final env = Platform.environment;
@@ -73,6 +84,9 @@ AppController buildProductionController() {
   );
 }
 
+/// Set once in `main` before the first frame. Fallback: [fallbackAppVersion].
+String appVersion = fallbackAppVersion;
+
 Widget buildApp() => SpicetifyApp(controller: buildProductionController());
 
 Future<void> main(List<String> args) async {
@@ -82,6 +96,7 @@ Future<void> main(List<String> args) async {
   }
 
   WidgetsFlutterBinding.ensureInitialized();
+  appVersion = await loadAppVersion();
   await configureWindow();
   runApp(buildApp());
 }
@@ -261,6 +276,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
           final theme = Theme.of(context);
 
           return Scaffold(
+            backgroundColor: windowBackdrop,
             body: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -275,14 +291,14 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                 // another.
                 Expanded(
                   child: Container(
-                    margin: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: theme.scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(outerRadius),
                       border: Border.all(color: const Color(0xFF3A3A3A)),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(outerRadius - 1),
                       child: Column(
                         children: [
                           if (usesCustomShell)

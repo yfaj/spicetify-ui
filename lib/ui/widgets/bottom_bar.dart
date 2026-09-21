@@ -24,7 +24,12 @@ class BottomBar extends StatelessWidget {
         return Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          color: Theme.of(context).scaffoldBackgroundColor,
+          // A darker shade plus a hairline divider, so the action bar never
+          // blends into the scrolling list above it.
+          decoration: const BoxDecoration(
+            color: Color(0xFF0E0E0E),
+            border: Border(top: BorderSide(color: Color(0xFF2E2E2E))),
+          ),
           child: Row(
             children: [
               IconButton(

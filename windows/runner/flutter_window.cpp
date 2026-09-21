@@ -1,13 +1,8 @@
 #include "flutter_window.h"
 
-#include <dwmapi.h>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
-
-namespace {
-
-}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -33,11 +28,7 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    // The scheduled auto re-apply run passes --check. It has no UI, so showing
-    // the window would pop it over whatever the user is doing every interval.
-    if (wcsstr(GetCommandLineW(), L"--check") == nullptr) {
-      this->Show();
-    }
+    this->Show();
   });
 
   // Flutter can complete the first frame before the "show window" callback is

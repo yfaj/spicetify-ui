@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-enum LogStream { stdout, stderr }
+enum LogStream { stdout, stderr, success, error }
 
 class LogLine {
   const LogLine(this.text, this.stream);

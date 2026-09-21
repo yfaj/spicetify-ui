@@ -57,11 +57,11 @@ class _LogPanelState extends State<LogPanel> {
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF141414),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: const Color(0xFF3A3A3A)),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(17),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -122,14 +122,18 @@ class _LogPanelState extends State<LogPanel> {
                             itemCount: widget.lines.length,
                             itemBuilder: (context, index) {
                               final line = widget.lines[index];
+                              final color = switch (line.stream) {
+                                LogStream.stderr || LogStream.error =>
+                                  const Color(0xFFEF4444),
+                                LogStream.success => const Color(0xFF4ADE80),
+                                LogStream.stdout => null,
+                              };
                               return Text(
                                 line.text,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontFamily: 'monospace',
                                   fontSize: 10.5,
-                                  color: line.stream == LogStream.stderr
-                                      ? const Color(0xFFEF4444)
-                                      : null,
+                                  color: color,
                                 ),
                               );
                             },

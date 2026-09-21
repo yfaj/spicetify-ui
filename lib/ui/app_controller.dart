@@ -65,7 +65,6 @@ class AppController extends ChangeNotifier {
   bool needsReapply = false;
 
   bool adminEnabled = false;
-  bool watchRunning = false;
   bool busy = false;
   bool lastCommandFailed = false;
   bool? autoReapplyEnabled;
@@ -83,12 +82,21 @@ class AppController extends ChangeNotifier {
   }
 
   final List<LogLine> log = [];
+
+  /// Maximum lines kept in memory. Older lines are dropped from the front.
+  static const int logCapacity = 2000;
+
   final Map<String, String> _staged = {};
 
   Set<String> get pendingChanges => _staged.keys.toSet();
 
   void _appendLog(LogLine line) {
     log.add(line);
+    // Cap the buffer so a long session (or a chatty command) cannot grow it
+    // without bound. Dropping from the front keeps the newest output visible.
+    if (log.length > logCapacity) {
+      log.removeRange(0, log.length - logCapacity);
+    }
     notifyListeners();
   }
 
@@ -98,13 +106,13 @@ class AppController extends ChangeNotifier {
     final name = args.isEmpty ? 'spicetify' : args.join(' ');
 
     if (result.ok) {
-      _appendLog(LogLine('Finished "$name"', LogStream.stdout));
+      _appendLog(LogLine('Finished "$name"', LogStream.success));
       return;
     }
 
     lastCommandFailed = true;
     _appendLog(
-      LogLine('Finished "$name" — exit ${result.exitCode}', LogStream.stderr),
+      LogLine('Finished "$name" — exit ${result.exitCode}', LogStream.error),
     );
 
     final output = result.output.trim();
@@ -142,6 +150,9 @@ class AppController extends ChangeNotifier {
         cliSource = null;
         config = null;
         _bridge = null;
+        _appendLog(
+          const LogLine('Spicetify not found', LogStream.error),
+        );
         return;
       }
 
@@ -149,6 +160,13 @@ class AppController extends ChangeNotifier {
       cliVersion = candidate.version;
       cliPath = candidate.path;
       cliSource = candidate.source;
+
+      _appendLog(
+        LogLine(
+          'Found Spicetify ${candidate.version} at ${candidate.path}',
+          LogStream.success,
+        ),
+      );
 
       _bridge = CliBridge(
         _runnerFactory(candidate.path),
@@ -263,13 +281,16 @@ class AppController extends ChangeNotifier {
     await refresh();
   }
 
+  /// Same path as [_run], exposed so tests can drive arbitrary commands.
+  @visibleForTesting
+  Future<void> runForTest(List<String> args) => _run(args);
+
   Future<void> restore() => _run(const ['restore']);
   Future<void> backup() => _run(const ['backup']);
   Future<void> clearBackup() => _run(const ['clear']);
   Future<void> enableDevtools() => _run(const ['enable-devtools']);
   Future<void> restart() => _run(const ['restart']);
   Future<void> upgrade() => _run(const ['upgrade']);
-  Future<void> refreshTheme() => _run(const ['refresh']);
 
   Future<void> setBlockUpdates(bool blocked) async {
     await _run(['spotify-updates', blocked ? 'block' : 'unblock']);
@@ -278,11 +299,6 @@ class AppController extends ChangeNotifier {
 
     updatesBlocked = blocked;
     _writeBlockedState(blocked);
-    notifyListeners();
-  }
-
-  Future<void> setWatch(bool running) async {
-    watchRunning = running;
     notifyListeners();
   }
 

@@ -234,6 +234,72 @@ void main() {
     expect(controller.adminEnabled, isFalse);
   });
 
+  test('a successful command finishes with a success log line', () async {
+    final controller = buildController(ScriptedRunner(const {
+      '--version': '2.45.0',
+      '-c': r'C:\cfg\config-xpui.ini',
+      'enable-devtools': 'ok',
+    }));
+    await controller.refresh();
+    controller.log.clear();
+
+    await controller.enableDevtools();
+
+    final finished = controller.log.lastWhere((l) => l.text.startsWith('Finished'));
+    expect(finished.stream, LogStream.success);
+  });
+
+  test('a failed command finishes with an error log line', () async {
+    final controller = buildController(
+      ThrowingRunner(throwOn: const {}, failWith: 'nope'),
+    );
+    await controller.refresh();
+    controller.log.clear();
+
+    await controller.restore();
+
+    final finished = controller.log.lastWhere((l) => l.text.startsWith('Finished'));
+    expect(finished.stream, LogStream.error);
+  });
+
+  test('refresh logs its outcome', () async {
+    final controller = buildController(ScriptedRunner(const {
+      '--version': '2.45.0',
+      '-c': r'C:\cfg\config-xpui.ini',
+    }));
+    controller.log.clear();
+
+    await controller.refresh();
+
+    expect(
+      controller.log.any((l) => l.text.contains('Spicetify 2.45.0')),
+      isTrue,
+      reason: 'refresh should log the detected CLI version',
+    );
+  });
+
+  test('the log is capped at 2000 lines', () async {
+    final responses = <String, String>{
+      '--version': '2.45.0',
+      '-c': r'C:\cfg\config-xpui.ini',
+    };
+    for (var i = 0; i < 2100; i++) {
+      responses['logme $i'] = 'line $i';
+    }
+    final runner = ScriptedRunner(responses);
+    final controller = buildController(runner);
+    await controller.refresh();
+    runner.calls.clear();
+
+    for (var i = 0; i < 2100; i++) {
+      await controller.runForTest(['logme', '$i']);
+    }
+
+    expect(controller.log.length, 2000);
+    expect(controller.log.last.text, contains('2099'));
+    expect(controller.log.first.text, isNot(contains('line 0 ')));
+  });
+
   test('an administrator-privilege failure raises a quit notice', () async {
     final controller = buildController(
       ThrowingRunner(

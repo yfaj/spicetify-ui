@@ -11,6 +11,13 @@ const Size windowSize = Size(640, 560);
 const Color accentColour = Color(0xFFF97316);
 const Color cardShadow = Color(0xCC2A1408);
 
+/// The designed backdrop behind the two cards. Neutral near-black that reads
+/// as a deliberate frame around the cards without any warm/yellow tint.
+const Color windowBackdrop = Color(0xFF0C0C0C);
+
+/// Corner radius of the window's outer frame, mirrored on the cards inside.
+const double outerRadius = 18;
+
 /// Width the log card occupies, including its margin.
 const double logPanelWidth = 228;
 
