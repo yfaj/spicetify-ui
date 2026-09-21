@@ -123,7 +123,17 @@ jobs:
           merge-multiple: true
           path: dist
 
+      - name: Flatten artifacts for upload
+        shell: bash
+        run: |
+          # Artifacts may nest their files in subdirectories (the Windows
+          # job uploads installer/dist/* alongside dist/*). Flatten so the
+          # release step finds every file regardless of nesting.
+          mkdir -p release-assets
+          find dist -type f -exec mv {} release-assets/ \;
+          ls -la release-assets
+
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: release-assets/*
           generate_release_notes: true
