@@ -6,6 +6,8 @@ Detects your Spicetify install, shows its configuration as a form, runs its
 commands, and re-applies the patch after Spotify updates. Not affiliated with
 Spicetify or Spotify AB.
 
+![Spicetify UI](assets/preview.png)
+
 ## Download
 
 Grab the latest release for your platform. Builds are unsigned, so Windows
