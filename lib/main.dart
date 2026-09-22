@@ -170,6 +170,7 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     widget.controller.addListener(_onControllerChanged);
     widget.controller.refresh();
     widget.controller.refreshAutoReapply();
+    widget.controller.checkForAppUpdate(appVersion);
   }
 
   @override
@@ -234,7 +235,6 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
     });
   }
 
-
   DotState _dotState(AppController controller) =>
       switch (controller.cliStatus) {
         CliStatus.found =>
@@ -297,6 +297,8 @@ class _SpicetifyAppState extends State<SpicetifyApp> {
                               appVersion: appVersion,
                               cliVersion: controller.cliVersion,
                               state: _dotState(controller),
+                              updateTag: controller.updateAvailable,
+                              onUpdateTap: () => controller.openUpdatePage(),
                             ),
                           Expanded(
                             child: Column(

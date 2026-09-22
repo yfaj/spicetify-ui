@@ -235,17 +235,21 @@ void main() {
   });
 
   test('a successful command finishes with a success log line', () async {
-    final controller = buildController(ScriptedRunner(const {
-      '--version': '2.45.0',
-      '-c': r'C:\cfg\config-xpui.ini',
-      'enable-devtools': 'ok',
-    }));
+    final controller = buildController(
+      ScriptedRunner(const {
+        '--version': '2.45.0',
+        '-c': r'C:\cfg\config-xpui.ini',
+        'enable-devtools': 'ok',
+      }),
+    );
     await controller.refresh();
     controller.log.clear();
 
     await controller.enableDevtools();
 
-    final finished = controller.log.lastWhere((l) => l.text.startsWith('Finished'));
+    final finished = controller.log.lastWhere(
+      (l) => l.text.startsWith('Finished'),
+    );
     expect(finished.stream, LogStream.success);
   });
 
@@ -258,15 +262,19 @@ void main() {
 
     await controller.restore();
 
-    final finished = controller.log.lastWhere((l) => l.text.startsWith('Finished'));
+    final finished = controller.log.lastWhere(
+      (l) => l.text.startsWith('Finished'),
+    );
     expect(finished.stream, LogStream.error);
   });
 
   test('refresh logs its outcome', () async {
-    final controller = buildController(ScriptedRunner(const {
-      '--version': '2.45.0',
-      '-c': r'C:\cfg\config-xpui.ini',
-    }));
+    final controller = buildController(
+      ScriptedRunner(const {
+        '--version': '2.45.0',
+        '-c': r'C:\cfg\config-xpui.ini',
+      }),
+    );
     controller.log.clear();
 
     await controller.refresh();

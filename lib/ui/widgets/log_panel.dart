@@ -149,39 +149,48 @@ class _LogPanelState extends State<LogPanel> {
                             child: NotificationListener<ScrollNotification>(
                               onNotification: _onScrollNotification,
                               child: ListView.builder(
-                              controller: _scroll,
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                              itemCount: widget.lines.length,
-                              itemBuilder: (context, index) {
-                                final line = widget.lines[index];
-                                final color = switch (line.stream) {
-                                  LogStream.stderr || LogStream.error =>
-                                    const Color(0xFFEF4444),
-                                  LogStream.success => const Color(0xFF4ADE80),
-                                  LogStream.stdout => null,
-                                };
-                                // While a task runs, everything from the
-                                // previous task sinks into the background so
-                                // the new output reads as the live one.
-                                final isHistory = widget.busy &&
-                                    widget.historyBoundary != null &&
-                                    index < widget.historyBoundary!;
-                                return AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 300),
-                                  opacity: isHistory ? 0.35 : 1.0,
-                                  child: Text(
-                                    line.text,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10.5,
-                                      color: color,
+                                controller: _scroll,
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  8,
+                                  12,
+                                  12,
+                                ),
+                                itemCount: widget.lines.length,
+                                itemBuilder: (context, index) {
+                                  final line = widget.lines[index];
+                                  final color = switch (line.stream) {
+                                    LogStream.stderr ||
+                                    LogStream.error => const Color(0xFFEF4444),
+                                    LogStream.success => const Color(
+                                      0xFF4ADE80,
                                     ),
-                                  ),
-                                );
-                              },
+                                    LogStream.stdout => null,
+                                  };
+                                  // While a task runs, everything from the
+                                  // previous task sinks into the background so
+                                  // the new output reads as the live one.
+                                  final isHistory =
+                                      widget.busy &&
+                                      widget.historyBoundary != null &&
+                                      index < widget.historyBoundary!;
+                                  return AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 300),
+                                    opacity: isHistory ? 0.35 : 1.0,
+                                    child: Text(
+                                      line.text,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontFamily: 'monospace',
+                                            fontSize: 10.5,
+                                            color: color,
+                                          ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
                   ),
                 ],
               ),

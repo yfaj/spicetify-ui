@@ -104,7 +104,8 @@ class SystemdTaskScheduler implements TaskScheduler {
     CommandRunner Function(String executable)? runnerFactory,
     String? home,
   }) : _runnerFactory = runnerFactory ?? SystemCommandRunner.new,
-       _home = home ??
+       _home =
+           home ??
            Platform.environment['HOME'] ??
            Platform.environment['USERPROFILE'] ??
            '.';
@@ -114,8 +115,7 @@ class SystemdTaskScheduler implements TaskScheduler {
 
   static const String unitName = 'spicetify-ui-autoreapply';
 
-  String get _servicePath =>
-      '$_home/.config/systemd/user/$unitName.service';
+  String get _servicePath => '$_home/.config/systemd/user/$unitName.service';
   String get _timerPath => '$_home/.config/systemd/user/$unitName.timer';
 
   String serviceUnit(String executable) =>
@@ -136,23 +136,18 @@ class SystemdTaskScheduler implements TaskScheduler {
       'WantedBy=timers.target\n';
 
   Future<bool> _systemctl(List<String> args) async {
-    final result = await _runnerFactory(
-      'systemctl',
-    ).run(['--user', ...args]);
+    final result = await _runnerFactory('systemctl').run(['--user', ...args]);
     return result.ok;
   }
 
   @override
   bool get isSupported =>
       Directory('/run/systemd/system').existsSync() ||
-      Directory('/run/user/${Platform.environment['UID'] ?? ''}')
-          .existsSync();
+      Directory('/run/user/${Platform.environment['UID'] ?? ''}').existsSync();
 
   @override
-  Future<bool> isRegistered() async => _systemctl([
-    'is-enabled',
-    '$unitName.timer',
-  ]);
+  Future<bool> isRegistered() async =>
+      _systemctl(['is-enabled', '$unitName.timer']);
 
   @override
   Future<bool> register(String executablePath) async {

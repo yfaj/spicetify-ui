@@ -10,6 +10,7 @@ import 'package:spicetify_ui/core/config/reapply.dart' as reapply;
 import 'package:spicetify_ui/core/platform/app_state.dart';
 import 'package:spicetify_ui/core/platform/platform_paths.dart';
 import 'package:spicetify_ui/core/platform/scheduler.dart';
+import 'package:spicetify_ui/core/update_check.dart';
 
 enum CliStatus { unknown, missing, found }
 
@@ -36,8 +37,11 @@ class AppController extends ChangeNotifier {
     bool? Function()? readBlockedState,
     void Function(bool value)? writeBlockedState,
     List<BackupFile> Function(String directory)? backupFileLister,
+    Future<String?> Function()? releaseTagFetcher,
   }) : _spotifyVersionDetector = spotifyVersionDetector ?? (() async => null),
-       _scheduler =    scheduler ??
+       _releaseTagFetcher = releaseTagFetcher ?? fetchLatestReleaseTag,
+       _scheduler =
+           scheduler ??
            taskSchedulerFor(
              isWindows: Platform.isWindows,
              isLinux: Platform.isLinux,
@@ -55,6 +59,7 @@ class AppController extends ChangeNotifier {
   final bool? Function() _readBlockedState;
   final void Function(bool value) _writeBlockedState;
   final List<BackupFile> Function(String directory) _backupFileLister;
+  final Future<String?> Function() _releaseTagFetcher;
 
   CliBridge? _bridge;
 
@@ -76,6 +81,30 @@ class AppController extends ChangeNotifier {
   String? runningCommand;
   String? lastAutoReapply;
   CommandNotice? notice;
+
+  /// Tag of a newer GitHub release, when one exists. Null means up to date
+  /// or the check failed (silently — update checks never surface errors).
+  String? updateAvailable;
+
+  Future<void> checkForAppUpdate(String currentVersion) async {
+    final tag = await _releaseTagFetcher();
+    if (tag != null && isNewerVersion(currentVersion, tag)) {
+      updateAvailable = tag;
+      notifyListeners();
+    }
+  }
+
+  Future<void> openUpdatePage() async {
+    final ok = await openReleasePage();
+    if (!ok) {
+      _appendLog(
+        LogLine(
+          'Could not open the browser. Visit $releaseRepoUrl/releases',
+          LogStream.stderr,
+        ),
+      );
+    }
+  }
 
   static const _adminMarker = 'administrator or root privileges';
 
@@ -158,9 +187,7 @@ class AppController extends ChangeNotifier {
         cliSource = null;
         config = null;
         _bridge = null;
-        _appendLog(
-          const LogLine('Spicetify not found', LogStream.error),
-        );
+        _appendLog(const LogLine('Spicetify not found', LogStream.error));
         return;
       }
 

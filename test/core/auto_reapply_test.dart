@@ -169,8 +169,7 @@ void main() {
   });
 
   group('SystemdTaskScheduler', () {
-    test('writes user units that run the check flag and enables the timer',
-        () async {
+    test('writes user units that run the check flag and enables the timer', () async {
       final runner = RecordingRunner(const {
         '--user daemon-reload': 'ok',
         '--user enable --now ${SystemdTaskScheduler.unitName}.timer': 'ok',
@@ -200,13 +199,17 @@ void main() {
         timer.readAsStringSync(),
         contains('${autoReapplyIntervalMinutes}min'),
       );
+      expect(runner.calls, contains(equals(['--user', 'daemon-reload'])));
       expect(
         runner.calls,
-        contains(equals(['--user', 'daemon-reload'])),
-      );
-      expect(
-        runner.calls,
-        contains(equals(['--user', 'enable', '--now', '${SystemdTaskScheduler.unitName}.timer'])),
+        contains(
+          equals([
+            '--user',
+            'enable',
+            '--now',
+            '${SystemdTaskScheduler.unitName}.timer',
+          ]),
+        ),
       );
     });
 
@@ -229,17 +232,27 @@ void main() {
 
       expect(ok, isTrue);
       expect(
-        File('${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.service')
-            .existsSync(),
+        File(
+          '${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.service',
+        ).existsSync(),
         isFalse,
       );
       expect(
-        File('${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.timer').existsSync(),
+        File(
+          '${home.path}/.config/systemd/user/${SystemdTaskScheduler.unitName}.timer',
+        ).existsSync(),
         isFalse,
       );
       expect(
         runner.calls,
-        contains(equals(['--user', 'disable', '--now', '${SystemdTaskScheduler.unitName}.timer'])),
+        contains(
+          equals([
+            '--user',
+            'disable',
+            '--now',
+            '${SystemdTaskScheduler.unitName}.timer',
+          ]),
+        ),
       );
     });
 
